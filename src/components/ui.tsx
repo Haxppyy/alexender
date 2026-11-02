@@ -28,7 +28,7 @@ export function Button({
     <button
       className={cn(
         "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl font-medium transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-35",
-        size === "sm" ? "h-8 px-3 text-xs" : "h-11 px-5 text-sm",
+        size === "sm" ? "h-9 px-3.5 text-[13px]" : "h-12 px-5 text-[15px]",
         variant === "primary" && "bg-fg text-bg hover:bg-white",
         variant === "ghost" && "text-muted hover:bg-surface-2 hover:text-fg",
         variant === "outline" && "border border-line-strong text-fg hover:border-faint hover:bg-surface-2",
@@ -47,7 +47,7 @@ export function IconButton({ className, label, ...props }: ButtonHTMLAttributes<
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-faint transition-[background-color,color,transform] duration-150 hover:bg-surface-2 hover:text-fg active:scale-90 disabled:opacity-25",
+        "inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-faint transition-[background-color,color,transform] duration-150 hover:bg-surface-2 hover:text-fg active:scale-90 disabled:opacity-25",
         className,
       )}
       {...props}
@@ -97,11 +97,11 @@ export function Checkbox({ checked, onChange, label, size = "md" }: { checked: b
       className={cn(
         // A larger invisible hit area keeps small circles easy to tap.
         "relative flex shrink-0 items-center justify-center rounded-full border-[1.5px] transition-[background-color,border-color] duration-200 before:absolute before:-inset-2.5 before:content-['']",
-        size === "sm" ? "size-4" : "size-[22px]",
+        size === "sm" ? "size-4" : "size-6",
         checked ? "animate-ring border-fg bg-fg text-bg" : "border-faint hover:border-fg",
       )}
     >
-      {checked && <Check className={cn("animate-check", size === "sm" ? "size-2.5" : "size-3.5")} strokeWidth={3.2} />}
+      {checked && <Check className={cn("animate-check", size === "sm" ? "size-2.5" : "size-4")} strokeWidth={3.2} />}
     </button>
   );
 }
@@ -124,7 +124,7 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
       >
         <div className="mx-auto mt-2 h-1 w-9 rounded-full bg-line-strong sm:hidden" />
         <div className="flex items-center justify-between gap-3 px-5 pt-3 pb-2 sm:pt-4">
-          <div className="min-w-0 flex-1 text-[15px] font-semibold">{title}</div>
+          <div className="min-w-0 flex-1 text-[17px] font-semibold">{title}</div>
           <IconButton label="Close" onClick={onClose}>
             <X className="size-4" />
           </IconButton>
@@ -181,10 +181,10 @@ export function AnimatedNumber({ value, from, format = (n: number) => String(Mat
 export function EmptyState({ icon, title, hint }: { icon: ReactNode; title: string; hint: string }) {
   return (
     <div className="animate-rise flex items-start gap-4 py-2">
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-crystal">{icon}</span>
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-crystal">{icon}</span>
       <span className="min-w-0 pt-0.5">
-        <span className="block text-[15px] font-medium">{title}</span>
-        <span className="mt-0.5 block text-[13px] leading-relaxed text-faint">{hint}</span>
+        <span className="block text-[17px] font-semibold">{title}</span>
+        <span className="mt-1 block text-[14.5px] leading-relaxed text-faint">{hint}</span>
       </span>
     </div>
   );
@@ -206,7 +206,7 @@ export function Segmented<T extends string>({ value, onChange, options }: { valu
           type="button"
           onClick={() => onChange(o.value)}
           aria-pressed={value === o.value}
-          className={cn("relative z-10 rounded-lg px-3.5 py-1.5 text-xs font-medium whitespace-nowrap transition-colors", value === o.value ? "text-fg" : "text-muted hover:text-fg")}
+          className={cn("relative z-10 rounded-lg px-4 py-2 text-[14px] font-medium whitespace-nowrap transition-colors", value === o.value ? "text-fg" : "text-muted hover:text-fg")}
         >
           {o.label}
         </button>
@@ -433,12 +433,12 @@ export function PillButton({ active, children, className, ...props }: ButtonHTML
     <button
       {...props}
       className={cn(
-        "group inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-[13px] font-medium transition-[border-color,color,background-color,transform] duration-200 active:scale-[0.97]",
+        "group inline-flex h-11 items-center gap-2 rounded-full border px-5 text-[14.5px] font-medium transition-[border-color,color,background-color,transform] duration-200 active:scale-[0.97]",
         active ? "border-crystal/70 bg-crystal-soft text-fg" : "border-line-strong text-muted hover:border-faint hover:text-fg",
         className,
       )}
     >
-      <Plus className={cn("size-3.5 transition-transform duration-300", active ? "rotate-45 text-crystal" : "group-hover:rotate-90")} />
+      <Plus className={cn("size-4 transition-transform duration-300", active ? "rotate-45 text-crystal" : "group-hover:rotate-90")} />
       {children}
     </button>
   );
@@ -499,7 +499,7 @@ export function SectionTop({ actions = [], children }: { actions?: AddAction[]; 
             aria-label={action.label}
             placeholder={action.placeholder}
             enterKeyHint="done"
-            className="h-12 text-center"
+            className="h-14 text-center text-[17px]"
           />
         </form>
       )}
@@ -531,7 +531,7 @@ export function Toaster() {
       {items.map((t) => (
         <div
           key={t.id}
-          className="animate-toast pointer-events-auto flex items-center gap-4 rounded-full border border-line-strong bg-surface-2/95 py-2 pr-2 pl-4 text-[13px] shadow-[0_10px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl"
+          className="animate-toast pointer-events-auto flex max-w-full items-center gap-4 rounded-full border border-line-strong bg-surface-2/95 py-2.5 pr-2 pl-5 text-[14.5px] font-medium shadow-[0_10px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl"
         >
           <span>{t.message}</span>
           {t.action ? (

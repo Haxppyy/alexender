@@ -326,10 +326,64 @@ export interface BucketItem {
   order: number;
 }
 
+export type JournalCategory = "day" | "thoughts" | "gratitude" | "lesson" | "win" | "mistake" | "idea" | "dream";
+
+/**
+ * One journal entry. A day can hold several, each in its own category. Entries written before
+ * there could be several have no id: their key in the journal is their date.
+ */
 export interface JournalEntry {
+  id?: string;
   date: string;
+  category?: JournalCategory;
   text: string;
+  createdAt?: number;
   updatedAt: number;
+}
+
+/** How a day was spent, in your own judgement: used or wasted, and 1–5 overall. The id is the date. */
+export interface DayRating {
+  id: string;
+  date: string;
+  verdict?: "used" | "wasted";
+  stars?: number;
+  createdAt: number;
+  updatedAt?: number;
+}
+
+/** Something you're saving money for. */
+export interface SavingsGoal {
+  id: string;
+  title: string;
+  target: number;
+  deadline?: string;
+  createdAt: number;
+  updatedAt?: number;
+  order?: number;
+}
+
+/** Money put in (positive) or taken out (negative). A goal's total is the sum. */
+export interface Deposit {
+  id: string;
+  goalId: string;
+  amount: number;
+  date: string; // YYYY-MM-DD
+  note?: string;
+  createdAt: number;
+  updatedAt?: number;
+}
+
+/** A video clip kept on this device. The video itself lives in its own store under `videoId`. */
+export interface Clip {
+  id: string;
+  title: string;
+  videoId: string;
+  type: string;
+  size: number;
+  durationSec?: number;
+  createdAt: number;
+  updatedAt?: number;
+  order?: number;
 }
 
 export interface Settings {

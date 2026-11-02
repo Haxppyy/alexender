@@ -5,7 +5,7 @@ import { create } from "zustand";
 import { persist, type PersistStorage, type StorageValue } from "zustand/middleware";
 import { todayKey } from "./date";
 import { deleteImages, deleteImagesLater, keepImages } from "./images";
-import type { Book, BucketItem, DayLog, Exercise, Goal, Habit, HabitCheck, Idea, Playlist, Question, Learning, Skill, WorkoutLog, WorkoutUnit, JournalEntry, ListItem, Mission, MyStory, Plan, Priority, Settings, StoryRead, Task, TimerSession, TimerTask, Video } from "./types";
+import type { Book, BucketItem, Clip, DayLog, DayRating, Deposit, Exercise, Goal, Habit, HabitCheck, Idea, Playlist, Question, Learning, Skill, WorkoutLog, WorkoutUnit, JournalCategory, JournalEntry, ListItem, Mission, MyStory, Plan, Priority, SavingsGoal, Settings, StoryRead, Task, TimerSession, TimerTask, Video } from "./types";
 import { pct, uid } from "./utils";
 
 /*
@@ -47,10 +47,10 @@ const idbStorage: PersistStorage<Data> = {
 };
 
 /** Collections whose records sync individually. Tombstone keys are `${kind}:${id}`. */
-export type Kind = "tasks" | "missions" | "goals" | "videos" | "books" | "bucket" | "donts" | "podcasts" | "plans" | "ideas" | "habits" | "habitChecks" | "timerTasks" | "timerSessions" | "exercises" | "workoutLogs" | "skills" | "learnings" | "questions" | "playlists" | "myStories" | "storiesRead" | "journal";
+export type Kind = "tasks" | "missions" | "goals" | "videos" | "books" | "bucket" | "donts" | "podcasts" | "plans" | "ideas" | "habits" | "habitChecks" | "timerTasks" | "timerSessions" | "exercises" | "workoutLogs" | "skills" | "learnings" | "questions" | "playlists" | "myStories" | "storiesRead" | "journal" | "dayRatings" | "savings" | "deposits" | "clips";
 
 /** Collections that can be reordered by dragging. */
-export type OrderedKind = "tasks" | "missions" | "goals" | "videos" | "books" | "bucket" | "donts" | "podcasts" | "plans" | "ideas" | "habits" | "timerTasks" | "exercises" | "skills" | "learnings" | "questions" | "playlists";
+export type OrderedKind = "tasks" | "missions" | "goals" | "videos" | "books" | "bucket" | "donts" | "podcasts" | "plans" | "ideas" | "habits" | "timerTasks" | "exercises" | "skills" | "learnings" | "questions" | "playlists" | "savings" | "clips";
 
 /** The simple lists that share one shape (ListItem). */
 export type ListKind = "donts" | "podcasts";
@@ -79,13 +79,18 @@ export interface Data {
   playlists: Playlist[];
   myStories: MyStory[];
   storiesRead: StoryRead[];
+  /** Keyed by entry id (by date for entries written before a day could hold several). */
   journal: Record<string, JournalEntry>;
+  dayRatings: DayRating[];
+  savings: SavingsGoal[];
+  deposits: Deposit[];
+  clips: Clip[];
   settings: Settings;
   /** When each record was deleted, so a delete on one device removes it everywhere. */
   deleted: Record<string, number>;
 }
 
-export const DATA_KEYS = ["tasks", "days", "missions", "goals", "videos", "books", "bucket", "donts", "podcasts", "plans", "ideas", "habits", "habitChecks", "timerTasks", "timerSessions", "exercises", "workoutLogs", "skills", "learnings", "questions", "playlists", "myStories", "storiesRead", "journal", "settings", "deleted"] as const;
+export const DATA_KEYS = ["tasks", "days", "missions", "goals", "videos", "books", "bucket", "donts", "podcasts", "plans", "ideas", "habits", "habitChecks", "timerTasks", "timerSessions", "exercises", "workoutLogs", "skills", "learnings", "questions", "playlists", "myStories", "storiesRead", "journal", "dayRatings", "savings", "deposits", "clips", "settings", "deleted"] as const;
 
 const defaultSettings: Settings = {
   name: "",
@@ -119,6 +124,10 @@ const initialData: Data = {
   myStories: [],
   storiesRead: [],
   journal: {},
+  dayRatings: [],
+  savings: [],
+  deposits: [],
+  clips: [],
   settings: defaultSettings,
   deleted: {},
 };
@@ -193,6 +202,8 @@ interface Actions {
   startTimer: (taskId: string, endsAt: number, open?: boolean) => void;
   /** End a session now (or at its planned end, if that has passed). */
   stopTimer: (id: string) => void;
+  /** Give a running countdown more time. */
+  extendTimer: (id: string, ms: number) => void;
   deleteSession: (id: string) => void;
 
   addExercise: (e: { title: string; target: number; unit: WorkoutUnit }) => string;
@@ -223,7 +234,25 @@ interface Actions {
   /** Put a just-deleted record back (undo). */
   restore: (kind: OrderedKind, record: { id: string }) => void;
 
-  setJournal: (date: string, text: string) => void;
+  /** A new, empty entry on a day. Returns its key. */
+  addJournal: (date: string, category: JournalCategory) => string;
+  /** Change an entry's text or category. */
+  updateJournal: (key: string, patch: { text?: string; category?: JournalCategory }) => void;
+  deleteJournal: (key: string) => void;
+
+  /** Used or wasted, and 1–5 overall. Passing the same value again takes it back. */
+  rateDay: (date: string, patch: { verdict?: "used" | "wasted"; stars?: number }) => void;
+
+  addSavingsGoal: (g: { title: string; target: number; deadline?: string }) => string;
+  updateSavingsGoal: (id: string, patch: Partial<SavingsGoal>) => void;
+  deleteSavingsGoal: (id: string) => void;
+  /** Money in (positive) or out (negative). Returns the deposit's id (for undo). */
+  addDeposit: (goalId: string, amount: number, note?: string) => string;
+  deleteDeposit: (id: string) => void;
+
+  addClip: (c: Omit<Clip, "id" | "createdAt" | "updatedAt" | "order">) => string;
+  updateClip: (id: string, patch: Partial<Clip>) => void;
+  deleteClip: (id: string) => void;
 
   updateSettings: (patch: Partial<Settings>) => void;
   /** Replace everything (import, erase). */
@@ -279,6 +308,10 @@ export function normalize(p: Partial<Data>): Data {
     myStories: p.myStories ?? [],
     storiesRead: p.storiesRead ?? [],
     journal: p.journal ?? {},
+    dayRatings: p.dayRatings ?? [],
+    savings: p.savings ?? [],
+    deposits: p.deposits ?? [],
+    clips: p.clips ?? [],
     settings,
     deleted: p.deleted ?? {},
   };
@@ -546,6 +579,8 @@ export const useStore = create<Store>()(
           const now = Date.now();
           return { timerSessions: s.timerSessions.map((x) => (x.id === id && !x.endedAt ? { ...x, endedAt: Math.min(now, x.endsAt), updatedAt: now } : x)) };
         }),
+      extendTimer: (id, ms) =>
+        setState((s) => ({ timerSessions: s.timerSessions.map((x) => (x.id === id && !x.endedAt ? { ...x, endsAt: Math.max(x.endsAt, Date.now()) + ms, updatedAt: Date.now() } : x)) })),
       addExercise: ({ title, target, unit }) => {
         const id = uid();
         const now = Date.now();
@@ -648,17 +683,67 @@ export const useStore = create<Store>()(
           return { [kind]: next } as Partial<Data>;
         }),
 
-      setJournal: (date, text) =>
+      addJournal: (date, category) => {
+        const id = uid();
+        const now = Date.now();
+        setState((s) => ({ journal: { ...s.journal, [id]: { id, date, category, text: "", createdAt: now, updatedAt: now } } }));
+        return id;
+      },
+      updateJournal: (key, patch) =>
         setState((s) => {
-          const journal = { ...s.journal };
-          if (text.trim()) {
-            journal[date] = { date, text, updatedAt: Date.now() };
-            return { journal };
-          }
-          if (!journal[date]) return s;
-          delete journal[date];
-          return { journal, deleted: tombstone(s.deleted, "journal", date) };
+          const entry = s.journal[key];
+          if (!entry) return s;
+          return { journal: { ...s.journal, [key]: { ...entry, ...patch, updatedAt: Date.now() } } };
         }),
+      deleteJournal: (key) =>
+        setState((s) => {
+          if (!s.journal[key]) return s;
+          const journal = { ...s.journal };
+          delete journal[key];
+          return { journal, deleted: tombstone(s.deleted, "journal", key) };
+        }),
+
+      rateDay: (date, patch) =>
+        setState((s) => {
+          const now = Date.now();
+          const old = s.dayRatings.find((r) => r.date === date);
+          const next: DayRating = { ...(old ?? { id: date, date, createdAt: now }), updatedAt: now };
+          if (patch.verdict) next.verdict = old?.verdict === patch.verdict ? undefined : patch.verdict;
+          if (patch.stars) next.stars = old?.stars === patch.stars ? undefined : patch.stars;
+          return { dayRatings: [...s.dayRatings.filter((r) => r.date !== date), next] };
+        }),
+
+      addSavingsGoal: ({ title, target, deadline }) => {
+        const id = uid();
+        const now = Date.now();
+        setState((s) => ({
+          savings: [...s.savings, { id, title, target, ...(deadline && { deadline }), createdAt: now, updatedAt: now, order: nextOrder(s.savings.map((g) => ({ order: g.order ?? 0 }))) }],
+        }));
+        return id;
+      },
+      updateSavingsGoal: (id, patch) => setState((s) => ({ savings: patchById(s.savings, id, patch) })),
+      deleteSavingsGoal: (id) =>
+        setState((s) => {
+          let deleted = tombstone(s.deleted, "savings", id);
+          for (const d of s.deposits) if (d.goalId === id) deleted = tombstone(deleted, "deposits", d.id);
+          return { savings: s.savings.filter((g) => g.id !== id), deposits: s.deposits.filter((d) => d.goalId !== id), deleted };
+        }),
+      addDeposit: (goalId, amount, note) => {
+        const id = uid();
+        const now = Date.now();
+        setState((s) => ({ deposits: [...s.deposits, { id, goalId, amount, date: todayKey(), createdAt: now, updatedAt: now, ...(note?.trim() && { note: note.trim() }) }] }));
+        return id;
+      },
+      deleteDeposit: (id) => setState((s) => ({ deposits: s.deposits.filter((d) => d.id !== id), deleted: tombstone(s.deleted, "deposits", id) })),
+
+      addClip: (c) => {
+        const id = uid();
+        const now = Date.now();
+        setState((s) => ({ clips: [...s.clips, { ...c, id, createdAt: now, updatedAt: now, order: nextOrder(s.clips.map((x) => ({ order: x.order ?? 0 }))) }] }));
+        return id;
+      },
+      updateClip: (id, patch) => setState((s) => ({ clips: patchById(s.clips, id, patch) })),
+      deleteClip: (id) => setState((s) => ({ clips: s.clips.filter((c) => c.id !== id), deleted: tombstone(s.deleted, "clips", id) })),
 
       updateSettings: (patch) => setState((s) => ({ settings: { ...s.settings, ...patch, updatedAt: Date.now() } })),
 
@@ -679,8 +764,8 @@ export const useStore = create<Store>()(
 
 /** The persisted/synced part of the store. */
 export function pickData(s: Data): Data {
-  const { tasks, days, missions, goals, videos, books, bucket, donts, podcasts, plans, ideas, habits, habitChecks, timerTasks, timerSessions, exercises, workoutLogs, skills, learnings, questions, playlists, myStories, storiesRead, journal, settings, deleted } = s;
-  return { tasks, days, missions, goals, videos, books, bucket, donts, podcasts, plans, ideas, habits, habitChecks, timerTasks, timerSessions, exercises, workoutLogs, skills, learnings, questions, playlists, myStories, storiesRead, journal, settings, deleted };
+  const { tasks, days, missions, goals, videos, books, bucket, donts, podcasts, plans, ideas, habits, habitChecks, timerTasks, timerSessions, exercises, workoutLogs, skills, learnings, questions, playlists, myStories, storiesRead, journal, dayRatings, savings, deposits, clips, settings, deleted } = s;
+  return { tasks, days, missions, goals, videos, books, bucket, donts, podcasts, plans, ideas, habits, habitChecks, timerTasks, timerSessions, exercises, workoutLogs, skills, learnings, questions, playlists, myStories, storiesRead, journal, dayRatings, savings, deposits, clips, settings, deleted };
 }
 
 /** Every image id referenced anywhere — used for backups and photo sync. */

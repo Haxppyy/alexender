@@ -27,6 +27,19 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// Tapping a notification (the timer ending) brings Alexander back to the front.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      const open = windows.find((w) => new URL(w.url).origin === self.location.origin);
+      if (open) return open.focus().then((w) => w?.navigate?.(url).catch(() => {}));
+      return self.clients.openWindow(url);
+    }),
+  );
+});
+
 const isStatic = (url) =>
   url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname.startsWith("/stories/") || /\.(?:webp|png|svg|woff2?)$/.test(url.pathname);
 

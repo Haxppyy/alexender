@@ -7,6 +7,7 @@ import { lockNow } from "@/components/AppShell";
 import { PasscodeSetup } from "@/components/Lock";
 import { Button, Card, Input, SectionTitle } from "@/components/ui";
 import { exportBackup, importBackup } from "@/lib/backup";
+import { clearVideos } from "@/lib/clips";
 import { clearImages } from "@/lib/images";
 import { verifyPasscode } from "@/lib/lock";
 import { useClock, useStore } from "@/lib/store";
@@ -329,6 +330,7 @@ function YourData() {
           onClick={async () => {
             if (await confirmDialog("Erase all Alexander data on every device?", { detail: "Export a backup first if you want to keep it.", danger: true, confirmLabel: "Erase all" })) {
               await clearImages();
+              await clearVideos();
               const synced = await resetEverywhere({});
               if (!synced) await alertDialog("Erased here, but couldn't reach your other devices.", "Erase again when you're online.");
             }

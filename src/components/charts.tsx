@@ -247,6 +247,9 @@ export interface HeatCell {
   /** 0–100, null when nothing was planned, undefined for days outside the range. */
   value: number | null | undefined;
   win?: boolean;
+  /** Your own verdict's colour (used or wasted), stronger with more stars. Wins over the score. */
+  color?: string;
+  strength?: number;
   tip: string;
 }
 
@@ -261,6 +264,7 @@ export function Heatmap({ weeks, monthLabels, onPick }: { weeks: HeatCell[][]; m
 
   const fill = (c: HeatCell) => {
     if (c.value === undefined) return "transparent";
+    if (c.color) return `color-mix(in oklab, ${c.color} ${c.strength ?? 70}%, var(--surface-2))`;
     if (c.value === null) return "var(--surface-2)";
     return `color-mix(in oklab, ${c.win ? "var(--crystal)" : "var(--fg)"} ${c.win ? 45 + c.value * 0.45 : 8 + c.value * 0.32}%, var(--surface-2))`;
   };

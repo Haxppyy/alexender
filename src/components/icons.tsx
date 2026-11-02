@@ -3,6 +3,7 @@ import {
   BookOpen,
   Calendar,
   CirclePlay,
+  Clapperboard,
   ClipboardList,
   Compass,
   Ellipsis,
@@ -14,6 +15,7 @@ import {
   Dumbbell,
   GraduationCap,
   MessageCircleQuestionMark,
+  PiggyBank,
   Sprout,
   Repeat,
   Timer,
@@ -54,4 +56,6 @@ export const SkillsIcon = thin(Sprout);
 export const LearningIcon = thin(GraduationCap);
 export const QuestionsIcon = thin(MessageCircleQuestionMark);
 export const SettingsIcon = thin(Settings2);
+export const SavingsIcon = thin(PiggyBank);
+export const ClipsIcon = thin(Clapperboard);
 export const MoreIcon = thin(Ellipsis);

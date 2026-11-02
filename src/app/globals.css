@@ -23,6 +23,8 @@
   --hue-rose: #e8a7b6;
   --hue-violet: #b8a9f0;
   --hue-teal: #84cfc8;
+  --hue-peach: #f0b48f;
+  --hue-lime: #c5d98a;
   --accent: #eceae5;
   --accent-fg: #000000;
   --success: #86c29f;
@@ -105,7 +107,7 @@ select:focus-visible {
     input,
     textarea,
     select {
-      font-size: 14px;
+      font-size: 15px;
     }
   }
 }

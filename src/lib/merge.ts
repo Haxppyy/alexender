@@ -52,12 +52,13 @@ export function mergeData(local: Data, remote: Data, now = Date.now()): Data {
   const deleted = mergeDeleted(local.deleted, remote.deleted, now);
   const tasks = mergeRecords("tasks", local.tasks, remote.tasks, deleted);
 
+  // Entries are keyed by id (by date for ones written before a day could hold several).
   const journal: Data["journal"] = {};
-  for (const date of [...new Set([...Object.keys(local.journal), ...Object.keys(remote.journal)])].sort()) {
-    const l = local.journal[date];
-    const r = remote.journal[date];
+  for (const key of [...new Set([...Object.keys(local.journal), ...Object.keys(remote.journal)])].sort()) {
+    const l = local.journal[key];
+    const r = remote.journal[key];
     const pick = !l ? r : !r ? l : r.updatedAt > l.updatedAt ? r : l;
-    if (pick && !(deleted[`journal:${date}`] >= pick.updatedAt)) journal[date] = pick;
+    if (pick && !(deleted[`journal:${key}`] >= pick.updatedAt)) journal[key] = pick;
   }
 
   return {
@@ -85,6 +86,10 @@ export function mergeData(local: Data, remote: Data, now = Date.now()): Data {
     myStories: mergeRecords("myStories", local.myStories ?? [], remote.myStories ?? [], deleted),
     storiesRead: mergeRecords("storiesRead", local.storiesRead ?? [], remote.storiesRead ?? [], deleted),
     journal,
+    dayRatings: mergeRecords("dayRatings", local.dayRatings ?? [], remote.dayRatings ?? [], deleted),
+    savings: mergeRecords("savings", local.savings ?? [], remote.savings ?? [], deleted),
+    deposits: mergeRecords("deposits", local.deposits ?? [], remote.deposits ?? [], deleted),
+    clips: mergeRecords("clips", local.clips ?? [], remote.clips ?? [], deleted),
     settings: pickSettings(local.settings, remote.settings),
     deleted,
   };

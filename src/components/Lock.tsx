@@ -2,6 +2,7 @@
 
 import { Delete } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { clearVideos } from "@/lib/clips";
 import { clearImages } from "@/lib/images";
 import { createLock, readFails, verifyPasscode, writeFails, writeUnlocked } from "@/lib/lock";
 import { useStore, useUI } from "@/lib/store";
@@ -57,6 +58,7 @@ export function LockScreen() {
       (await confirmDialog("Erase everything now?", { detail: "This cannot be undone.", danger: true, confirmLabel: "Erase all" }))
     ) {
       await clearImages();
+      await clearVideos();
       writeFails({ count: 0, until: 0 });
       writeUnlocked(false);
       await resetEverywhere({});

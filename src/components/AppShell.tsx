@@ -219,11 +219,11 @@ function Sidebar() {
               aria-current={active ? "page" : undefined}
               className={cn(
                 // Same weight active or not, so nothing shifts; only the tone changes, quickly.
-                "flex h-9 items-center gap-3 rounded-lg px-2.5 text-[13.5px] transition-colors duration-150 active:bg-surface-2",
+                "flex h-10 shrink-0 items-center gap-3 rounded-xl px-3 text-[14.5px] transition-colors duration-150 active:bg-surface-2",
                 active ? "bg-surface-2 text-fg" : "text-muted hover:bg-surface hover:text-fg",
               )}
             >
-              <Icon className="size-[18px]" />
+              <Icon className="size-5" />
               {label}
             </Link>
           );
@@ -268,11 +268,11 @@ function TopBar() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-line/70 bg-bg/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-      <div className="mx-auto flex h-13 max-w-5xl items-center gap-3 px-4 sm:px-6 lg:px-10">
-        <p className="text-[15px] font-medium lg:hidden">
+      <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4 sm:px-6 lg:px-10">
+        <p className="text-[18px] font-semibold tracking-tight lg:hidden">
           {pathname === "/" ? date : (section?.label ?? "Alexander")}
         </p>
-        <p className="hidden text-[13px] lg:block">
+        <p className="hidden text-[14.5px] lg:block">
           {pathname !== "/" && section && <span className="font-medium text-fg">{section.label} · </span>}
           <span className="text-muted">{date}</span>
         </p>
@@ -336,7 +336,7 @@ function BottomNav() {
   return (
     <>
       <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/90 backdrop-blur-xl lg:hidden">
-        <div className="mx-auto grid h-15 max-w-md grid-cols-4 px-[env(safe-area-inset-left)]">
+        <div className="mx-auto grid h-16 max-w-md grid-cols-4 px-[env(safe-area-inset-left)]">
           {primary.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href);
             return (
@@ -345,11 +345,11 @@ function BottomNav() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition-[color,transform] duration-150 active:scale-95",
+                  "flex flex-col items-center justify-center gap-1 text-[11.5px] font-medium transition-[color,transform] duration-150 active:scale-95",
                   active ? "text-fg" : "text-faint",
                 )}
               >
-                <Icon className="size-[22px]" />
+                <Icon className="size-6" />
                 {label}
               </Link>
             );
@@ -379,8 +379,8 @@ function Orb() {
       {open && (
         <nav
           aria-label="All sections"
-          className="orb-panel fixed right-4 z-50 max-h-[calc(100dvh-11rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain rounded-3xl border border-line-strong bg-surface/95 p-2 shadow-[0_24px_60px_rgba(0,0,0,0.6)] backdrop-blur-xl"
-          style={{ bottom: "calc(8.75rem + env(safe-area-inset-bottom))" }}
+          className="orb-panel fixed right-4 z-50 max-h-[calc(100dvh-11rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain rounded-3xl border border-line-strong bg-surface/95 p-2 shadow-[0_24px_60px_rgba(0,0,0,0.6)] backdrop-blur-xl"
+          style={{ bottom: "calc(9.25rem + env(safe-area-inset-bottom))" }}
         >
           <div className="grid grid-cols-3 gap-1">
             {NAV.map(({ href, label, icon: Icon }, i) => {
@@ -392,11 +392,11 @@ function Orb() {
                   onClick={() => active && close()}
                   style={{ animationDelay: `${Math.min(i, 14) * 18}ms` }}
                   className={cn(
-                    "orb-item flex flex-col items-center justify-center gap-1.5 rounded-2xl py-3 text-[11.5px] font-medium transition-colors",
+                    "orb-item flex flex-col items-center justify-center gap-1.5 rounded-2xl py-3.5 text-[12.5px] font-medium transition-colors",
                     active ? "bg-surface-3 text-fg" : "text-muted active:bg-surface-2",
                   )}
                 >
-                  <Icon className="size-[21px]" />
+                  <Icon className="size-6" />
                   {label}
                 </Link>
               );
@@ -408,8 +408,8 @@ function Orb() {
         onClick={() => (open ? close() : setOpenAt(pathname))}
         aria-label={open ? "Close sections" : "All sections"}
         aria-expanded={open}
-        className={cn("orb fixed right-4 z-50 flex size-[52px] items-center justify-center rounded-full text-white/90 transition-transform duration-300 active:scale-90", open && "rotate-45")}
-        style={{ bottom: "calc(4.75rem + env(safe-area-inset-bottom))" }}
+        className={cn("orb fixed right-4 z-50 flex size-14 items-center justify-center rounded-full text-white/90 transition-transform duration-300 active:scale-90", open && "rotate-45")}
+        style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
       >
         <Plus className="size-5 drop-shadow" strokeWidth={2} />
       </button>

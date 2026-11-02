@@ -78,8 +78,8 @@ function DialogCard({ ask }: { ask: Ask }) {
         }}
         className="animate-sheet relative w-full max-w-sm rounded-2xl border border-line-strong bg-surface-2 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
       >
-        <p className="text-[15px] leading-snug font-medium">{ask.message}</p>
-        {ask.detail && <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{ask.detail}</p>}
+        <p className="text-[17px] leading-snug font-semibold">{ask.message}</p>
+        {ask.detail && <p className="mt-1.5 text-[14.5px] leading-relaxed text-muted">{ask.detail}</p>}
         {ask.kind === "prompt" && (
           <input
             autoFocus
@@ -94,7 +94,7 @@ function DialogCard({ ask }: { ask: Ask }) {
         )}
         <div className="mt-5 flex justify-end gap-2">
           {ask.kind !== "alert" && (
-            <button type="button" onClick={cancel} className="h-10 rounded-full px-4 text-[13.5px] font-medium text-muted transition-colors hover:text-fg">
+            <button type="button" onClick={cancel} className="h-11 rounded-full px-5 text-[15px] font-medium text-muted transition-colors hover:text-fg">
               Cancel
             </button>
           )}
@@ -102,7 +102,7 @@ function DialogCard({ ask }: { ask: Ask }) {
             type="submit"
             autoFocus={ask.kind !== "prompt"}
             className={cn(
-              "h-10 rounded-full px-5 text-[13.5px] font-medium transition-transform active:scale-95",
+              "h-11 rounded-full px-6 text-[15px] font-semibold transition-transform active:scale-95",
               ask.danger ? "bg-danger text-black" : "bg-fg text-bg",
             )}
           >

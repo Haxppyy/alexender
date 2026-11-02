@@ -1,9 +1,9 @@
 "use client";
 
-import { GraduationCap, Search, X } from "lucide-react";
+import { GraduationCap, Search, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SectionProgress } from "@/components/SectionProgress";
-import { EmptyState, IconButton, toast } from "@/components/ui";
+import { Button, EmptyState, Modal, toast } from "@/components/ui";
 import { addDays, daysBetween, fromKey } from "@/lib/date";
 import { tap } from "@/lib/motion";
 import { useClock, useStore } from "@/lib/store";
@@ -25,6 +25,10 @@ function resurface(list: Learning[], today: string) {
   return old[seed % old.length];
 }
 
+/** Every learning gets its own colour, the same one each time you see it. */
+const CARD_HUES = ["var(--hue-sky)", "var(--hue-sage)", "var(--hue-amber)", "var(--hue-rose)", "var(--hue-violet)", "var(--hue-teal)", "var(--hue-peach)", "var(--hue-lime)"];
+const hueFor = (id: string) => CARD_HUES[[...id].reduce((n, c) => (n * 31 + c.charCodeAt(0)) % 9973, 7) % CARD_HUES.length];
+
 const dayLabel = (date: string, today: string) =>
   date === today ? "Today" : date === addDays(today, -1) ? "Yesterday" : fromKey(date).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "short" });
 
@@ -38,6 +42,7 @@ export default function LearningPage() {
   const [source, setSource] = useState("");
   const [skillId, setSkillId] = useState<string | undefined>();
   const [query, setQuery] = useState("");
+  const [opened, setOpened] = useState<Learning | null>(null);
 
   const skillName = useMemo(() => new Map(skills.map((k) => [k.id, k.title])), [skills]);
   const dates = useMemo(() => new Set(learnings.map((l) => l.date)), [learnings]);
@@ -92,7 +97,7 @@ export default function LearningPage() {
           placeholder="What did you learn?"
           aria-label="What did you learn?"
           rows={2}
-          className="block w-full resize-none bg-transparent text-[16px] leading-relaxed outline-none placeholder:text-faint [field-sizing:content]"
+          className="block w-full resize-none bg-transparent text-[18px] leading-relaxed outline-none placeholder:text-faint [field-sizing:content]"
         />
         <div className="mt-1 flex flex-wrap items-center gap-2 border-t border-line pt-2">
           <input
@@ -105,7 +110,7 @@ export default function LearningPage() {
           <button
             type="submit"
             disabled={!text.trim()}
-            className="h-8 shrink-0 rounded-full bg-fg px-4 text-[13px] font-medium text-bg transition-[transform,opacity] active:scale-95 disabled:opacity-30"
+            className="h-10 shrink-0 rounded-full bg-fg px-5 text-[14px] font-semibold text-bg transition-[transform,opacity] active:scale-95 disabled:opacity-30"
           >
             Save
           </button>
@@ -140,9 +145,9 @@ export default function LearningPage() {
 
       {/* Something you learned a while ago, back for a moment — remembering is half of learning. */}
       {back && !q && (
-        <section className="animate-rise mb-10 rounded-2xl bg-crystal-soft px-4 py-3.5">
-          <p className="text-[11.5px] text-crystal/80">Remember this? · {fromKey(back.date).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</p>
-          <p className="mt-1 text-[15px] leading-relaxed break-words whitespace-pre-wrap">{back.text}</p>
+        <section className="animate-rise mb-10 rounded-3xl bg-crystal-soft px-5 py-5">
+          <p className="text-[12.5px] font-medium text-crystal/90">Remember this? · {fromKey(back.date).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</p>
+          <p className="mt-1.5 text-[19px] leading-[1.45] font-medium break-words whitespace-pre-wrap">{back.text}</p>
           {(back.source || back.skillId) && (
             <p className="mt-1 text-[12px] text-faint">{[back.source, back.skillId && skillName.get(back.skillId)].filter(Boolean).join(" · ")}</p>
           )}
@@ -169,37 +174,58 @@ export default function LearningPage() {
       <div className="space-y-8">
         {groups.map(([date, items]) => (
           <section key={date}>
-            <h2 className="mb-2 text-[12px] font-medium text-faint">{dayLabel(date, today)}</h2>
-            <ul className="space-y-1">
-              {items.map((l) => (
-                <li key={l.id} className="group flex items-start gap-3">
-                  <span aria-hidden className="mt-[10px] size-1.5 shrink-0 rounded-full bg-crystal/70" />
-                  <span className="min-w-0 flex-1 py-1">
-                    <span className="block text-[15px] leading-relaxed break-words whitespace-pre-wrap">{l.text}</span>
-                    {(l.source || l.skillId) && (
-                      <span className="mt-0.5 block text-[12px] text-faint">
-                        {l.source}
-                        {l.source && l.skillId && " · "}
-                        {l.skillId && <span className="text-crystal/80">{skillName.get(l.skillId) ?? "Skill"}</span>}
-                      </span>
-                    )}
-                  </span>
-                  <IconButton
-                    label="Delete"
-                    onClick={() => {
-                      deleteLearning(l.id);
-                      toast("Deleted", { label: "Undo", run: () => restore("learnings", l) });
-                    }}
-                    className="size-8 hover:text-danger pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100"
-                  >
-                    <X className="size-3.5" />
-                  </IconButton>
-                </li>
-              ))}
+            <h2 className="mb-3 text-[15px] font-semibold text-muted">{dayLabel(date, today)}</h2>
+            <ul className="space-y-3">
+              {items.map((l) => {
+                const hue = hueFor(l.id);
+                return (
+                  <li key={l.id}>
+                    {/* Tap a learning to read it whole, or to delete it. */}
+                    <button
+                      type="button"
+                      onClick={() => setOpened(l)}
+                      className="animate-rise block w-full rounded-3xl px-5 py-5 text-left transition-transform active:scale-[0.99]"
+                      style={{ background: `linear-gradient(135deg, color-mix(in oklab, ${hue} 34%, var(--surface)), color-mix(in oklab, ${hue} 16%, var(--surface)))`, boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${hue} 40%, transparent)` }}
+                    >
+                      <span className="block text-[20px] leading-[1.45] font-medium break-words whitespace-pre-wrap text-fg sm:text-[21px]">{l.text}</span>
+                      {(l.source || l.skillId) && (
+                        <span className="mt-3 block text-[13.5px] font-medium" style={{ color: hue }}>
+                          {[l.source, l.skillId && (skillName.get(l.skillId) ?? "Skill")].filter(Boolean).join(" · ")}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         ))}
       </div>
+
+      <Modal open={!!opened} onClose={() => setOpened(null)} title={opened ? dayLabel(opened.date, today) : ""}>
+        {opened && (
+          <div className="pb-1">
+            <p className="text-[21px] leading-[1.5] font-medium break-words whitespace-pre-wrap">{opened.text}</p>
+            {(opened.source || opened.skillId) && (
+              <p className="mt-3 text-[14px] font-medium" style={{ color: hueFor(opened.id) }}>
+                {[opened.source, opened.skillId && (skillName.get(opened.skillId) ?? "Skill")].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            <Button
+              variant="danger"
+              className="mt-6 w-full"
+              onClick={() => {
+                const l = opened;
+                deleteLearning(l.id);
+                setOpened(null);
+                toast("Deleted", { label: "Undo", run: () => restore("learnings", l) });
+              }}
+            >
+              <Trash2 className="size-4" /> Delete
+            </Button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
