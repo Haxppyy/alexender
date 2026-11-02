@@ -2,6 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     { "name": "alexender", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 3000 },
-    { "name": "alexender-prod", "runtimeExecutable": "npx", "runtimeArgs": ["next", "start", "-p", "3005"], "port": 3005, "autoPort": false }
+    { "name": "alexender-prod", "runtimeExecutable": "npx", "runtimeArgs": ["next", "start", "-p", "3005"], "port": 3005, "autoPort": false },
+    { "name": "drift-preview", "runtimeExecutable": "node", "runtimeArgs": ["-e", "const fs=require('fs');require('http').createServer((q,s)=>{s.setHeader('content-type','text/html; charset=utf-8');s.end(fs.readFileSync('C:/Users/Happy/AppData/Local/Temp/claude/C--Users-Happy-OneDrive-Desktop-Alexender/42d9293e-9887-4720-ac34-39a5b0166ceb/scratchpad/drift.html'))}).listen(4517)"], "port": 4517 }
   ]
 }

@@ -303,42 +303,61 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 /*
- * The phone's orb: a black disc with one arc of crystal light slowly circling its edge, and four
- * dots (every section) that fold into a cross while the menu is open. Then the menu fans out of it.
+ * The phone's orb, perfectly still: a black disc caught by light like an eclipse — a crystal
+ * crescent along its upper edge, a fine inner ring — and four dots (every section) that fold into
+ * a cross while the menu is open. Then the menu fans out of it.
  */
 .orb {
   isolation: isolate;
-  background: radial-gradient(circle at 50% 30%, #1a1a19 0%, #070707 70%);
+  background: radial-gradient(circle at 35% 25%, #1c1c1b 0%, #080808 62%, #030303 100%);
   box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.07),
+    0 0 0 1px rgb(255 255 255 / 0.06),
     0 14px 34px rgb(0 0 0 / 0.75);
+  transition: box-shadow 0.25s var(--ease-out);
 }
-/* The circling arc: a conic gradient cut down to a thin ring. */
+/* The crescent: a conic band of light cut down to a thin ring, brightest at the top left. */
 .orb::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 1.5px;
-  background: conic-gradient(from 0deg, transparent 0deg, transparent 200deg, color-mix(in oklab, var(--crystal) 40%, transparent) 280deg, var(--crystal) 350deg, transparent 360deg);
+  padding: 1.6px;
+  background: conic-gradient(
+    from 210deg,
+    transparent 0deg,
+    color-mix(in oklab, var(--crystal) 25%, transparent) 50deg,
+    var(--crystal) 110deg,
+    #fff 125deg,
+    var(--crystal) 140deg,
+    color-mix(in oklab, var(--crystal) 25%, transparent) 200deg,
+    transparent 250deg
+  );
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: orb-spin 5s linear infinite;
+  opacity: 0.85;
+  transition: opacity 0.25s var(--ease-out);
 }
-/* A faint glow under it, so it reads as light rather than paint. */
+/* A fine inner ring, and a soft corona where the light falls. */
 .orb::after {
   content: "";
   position: absolute;
-  inset: 8px;
-  z-index: -1;
+  inset: 6px;
   border-radius: inherit;
-  box-shadow: 0 0 22px rgb(142 205 242 / 0.22);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.05),
+    -6px -8px 22px -6px rgb(142 205 242 / 0.28);
 }
 .orb[data-open]::before {
-  animation-duration: 1.4s;
+  opacity: 1;
+}
+.orb[data-open] {
+  box-shadow:
+    0 0 0 1px rgb(142 205 242 / 0.25),
+    0 0 28px rgb(142 205 242 / 0.25),
+    0 14px 34px rgb(0 0 0 / 0.75);
 }
 @keyframes orb-spin {
   to {
@@ -628,6 +647,80 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   box-shadow:
     0 0 0 1px rgb(255 255 255 / 0.25) inset,
     0 12px 40px color-mix(in oklab, var(--glow) 45%, transparent);
+}
+
+/* VICTORY, struck in gold: it lands big and settles, then a light runs along the letters. */
+.victory-word {
+  background: linear-gradient(100deg, #8a5a12 0%, #f7d77a 22%, #fff6d6 32%, #e0ac34 45%, #a8741c 60%, #f7d77a 78%, #8a5a12 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 18px rgb(224 172 52 / 0.35));
+  animation:
+    victory-strike 0.7s 0.45s var(--ease-spring) both,
+    victory-gleam 3.2s 1.3s ease-in-out infinite;
+}
+@keyframes victory-strike {
+  0% {
+    opacity: 0;
+    transform: scale(1.8);
+    letter-spacing: 0.4em;
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes victory-gleam {
+  0%,
+  100% {
+    background-position: 100% 0;
+  }
+  50% {
+    background-position: 0 0;
+  }
+}
+.victory-claim {
+  background: linear-gradient(180deg, #fff1b8 0%, #e9be55 45%, #c08a22 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    inset 0 -2px 0 rgb(0 0 0 / 0.2),
+    0 12px 36px rgb(224 172 52 / 0.35);
+}
+/* The spoils arrive one by one — and on Claim, fly up into the treasury. */
+.spoil {
+  animation: spoil-in 0.45s var(--ease-spring) both;
+}
+@keyframes spoil-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.spoil-collect {
+  animation: spoil-out 0.6s var(--ease-out) both;
+}
+@keyframes spoil-out {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  30% {
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-46vh) scale(0.3);
+  }
 }
 
 /* The running timer's ring breathes, slowly. */

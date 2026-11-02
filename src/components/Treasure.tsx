@@ -148,3 +148,52 @@ export function MedalBadge({ metal, gem, size = 88, locked, className }: { metal
     </span>
   );
 }
+
+/** One sword, point up: a steel blade with a ridge, a gold guard, a wrapped grip and a pommel. */
+function Sword({ id, angle }: { id: string; angle: number }) {
+  return (
+    <g transform={`rotate(${angle} 60 60) translate(60 60) scale(1.32) translate(-60 -60)`}>
+      <polygon points="60,6 64.5,16 64.5,78 60,82 55.5,78 55.5,16" fill={`url(#${id}-steel)`} />
+      <line x1="60" y1="10" x2="60" y2="78" stroke="#fff" strokeOpacity="0.55" strokeWidth="0.8" />
+      <rect x="44" y="78" width="32" height="5" rx="2.5" fill={`url(#${id}-gold)`} />
+      <rect x="57" y="83" width="6" height="16" rx="2" fill="#3a2414" />
+      <circle cx="60" cy="102" r="4.2" fill={`url(#${id}-gold)`} />
+    </g>
+  );
+}
+
+/** Victory: two crossed swords behind a gold-rimmed shield, the prize set in its face. */
+export function VictoryEmblem({ gem, size = 200 }: { gem: GemKind; size?: number }) {
+  const id = useId().replace(/:/g, "");
+  const shield = "M60 18 L96 30 V58 C96 84 78 100 60 108 C42 100 24 84 24 58 V30 Z";
+  return (
+    <span className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg viewBox="0 0 120 120" width={size} height={size} className="absolute inset-0 overflow-visible" aria-hidden style={{ filter: "drop-shadow(0 10px 30px rgb(0 0 0 / 0.6))" }}>
+        <defs>
+          <linearGradient id={`${id}-steel`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stopColor="#7d8794" />
+            <stop offset="0.45" stopColor="#f4f7fb" />
+            <stop offset="0.55" stopColor="#c9d0da" />
+            <stop offset="1" stopColor="#5b6470" />
+          </linearGradient>
+          <linearGradient id={`${id}-gold`} x1="0.1" y1="0" x2="0.9" y2="1">
+            <stop offset="0" stopColor="#fff3c2" />
+            <stop offset="0.45" stopColor="#e0ac34" />
+            <stop offset="0.75" stopColor="#7a4c0c" />
+            <stop offset="1" stopColor="#d79f2c" />
+          </linearGradient>
+          <radialGradient id={`${id}-enamel`} cx="0.5" cy="0.3" r="0.8">
+            <stop offset="0" stopColor="#24201a" />
+            <stop offset="1" stopColor="#060504" />
+          </radialGradient>
+        </defs>
+        <Sword id={id} angle={-44} />
+        <Sword id={id} angle={44} />
+        <path d={shield} fill={`url(#${id}-gold)`} />
+        <path d={shield} fill={`url(#${id}-enamel)`} transform="translate(60 63) scale(0.84) translate(-60 -63)" />
+        <path d={shield} fill="none" stroke={`url(#${id}-gold)`} strokeWidth="1.2" strokeDasharray="1.6 2.4" transform="translate(60 63) scale(0.74) translate(-60 -63)" />
+      </svg>
+      <Gem kind={gem} size={size * 0.34} className="relative mt-[6%]" />
+    </span>
+  );
+}

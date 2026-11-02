@@ -54,9 +54,6 @@ export default function SkillsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <header className="mb-6">
-        <h1 className="text-[26px] leading-tight font-semibold tracking-tight">Skills</h1>
-      </header>
 
       <form
         onSubmit={(e) => {

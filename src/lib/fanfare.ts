@@ -1,71 +1,97 @@
 import type { Rarity } from "./achievements";
 
 /*
- * The sound of earning something: a rising arpeggio of bell tones that lands on a held chord.
- * The rarer the win, the longer and richer — a legendary one opens with a low swell and ends in a
- * shimmer of high notes. Pure Web Audio, no files.
+ * The sounds of winning, made with Web Audio — no files.
+ *  - victory(): a brass call, "ta-ta-ta-taaa", over war drums; grander the rarer the win.
+ *  - collect(): bright pings, like gems dropping into the treasury, when you claim.
  */
 
 const NOTE = (n: number) => 261.63 * Math.pow(2, n / 12); // semitones from middle C
 
-const RUNS: Record<Rarity, number[]> = {
-  1: [0, 4, 7, 12],
-  2: [0, 4, 7, 12, 16],
-  3: [-5, 0, 4, 7, 12, 16, 19],
-  4: [-12, -5, 0, 4, 7, 12, 16, 19, 24],
-};
-
-function bell(ctx: AudioContext, freq: number, at: number, length: number, volume: number) {
-  // A bell: the note plus a quieter, slightly sharp octave that fades faster.
-  for (const [mult, vol, len] of [
-    [1, volume, length],
-    [2.01, volume * 0.35, length * 0.6],
-  ] as const) {
+/** A horn: two slightly detuned saws through a filter that opens as the note swells. */
+function horn(ctx: AudioContext, freq: number, at: number, length: number, volume: number) {
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(600, at);
+  filter.frequency.exponentialRampToValueAtTime(2600, at + 0.08);
+  filter.frequency.exponentialRampToValueAtTime(1200, at + length);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, at);
+  gain.gain.exponentialRampToValueAtTime(volume, at + 0.04);
+  gain.gain.setValueAtTime(volume * 0.85, at + length * 0.7);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + length + 0.25);
+  filter.connect(gain).connect(ctx.destination);
+  for (const detune of [-6, 6]) {
     const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = mult === 1 ? "triangle" : "sine";
-    osc.frequency.value = freq * mult;
-    gain.gain.setValueAtTime(0.0001, at);
-    gain.gain.exponentialRampToValueAtTime(vol, at + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.0001, at + len);
-    osc.connect(gain).connect(ctx.destination);
+    osc.type = "sawtooth";
+    osc.frequency.value = freq;
+    osc.detune.value = detune;
+    osc.connect(filter);
     osc.start(at);
-    osc.stop(at + len + 0.05);
+    osc.stop(at + length + 0.3);
   }
 }
 
-export function fanfare(rarity: Rarity) {
+/** A war drum: a low thump that falls in pitch. */
+function drum(ctx: AudioContext, at: number, volume: number) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(120, at);
+  osc.frequency.exponentialRampToValueAtTime(45, at + 0.35);
+  gain.gain.setValueAtTime(volume, at);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.5);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(at);
+  osc.stop(at + 0.55);
+}
+
+function bell(ctx: AudioContext, freq: number, at: number, length: number, volume: number) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.0001, at);
+  gain.gain.exponentialRampToValueAtTime(volume, at + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + length);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(at);
+  osc.stop(at + length + 0.05);
+}
+
+function play(build: (ctx: AudioContext, t: number) => number) {
   try {
     const ctx = new AudioContext();
-    const t = ctx.currentTime + 0.05;
-    const run = RUNS[rarity];
-    const step = rarity >= 3 ? 0.085 : 0.075;
-
-    if (rarity === 4) {
-      // A low swell underneath it all.
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(55, t);
-      osc.frequency.exponentialRampToValueAtTime(82, t + 1.2);
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.28, t + 0.4);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + 2.7);
-    }
-
-    run.forEach((n, i) => bell(ctx, NOTE(n), t + i * step, 1.1, 0.16));
-    // Land on the chord, held.
-    const end = t + run.length * step + 0.05;
-    for (const n of [0, 4, 7, 12]) bell(ctx, NOTE(n + (rarity >= 3 ? 12 : 0)), end, 1.8 + rarity * 0.3, 0.09);
-    // A shimmer of high notes for the rare ones.
-    if (rarity >= 3)
-      for (let i = 0; i < 6 + rarity * 2; i++) bell(ctx, NOTE(24 + [0, 4, 7, 12][i % 4] + (i % 3) * 12), end + 0.15 + i * 0.06, 0.5, 0.035);
-
-    setTimeout(() => ctx.close().catch(() => {}), 6000);
+    const seconds = build(ctx, ctx.currentTime + 0.05);
+    setTimeout(() => ctx.close().catch(() => {}), (seconds + 1) * 1000);
   } catch {}
+}
+
+/** Battle won. */
+export function victory(rarity: Rarity) {
+  play((ctx, t) => {
+    const v = 0.07 + rarity * 0.012;
+    // The call: three short notes, then the long one — a fifth higher for the rare wins.
+    const call = rarity >= 3 ? [7, 7, 7, 12, 16, 19] : [7, 7, 7, 12];
+    const beats = rarity >= 3 ? [0, 0.13, 0.26, 0.42, 0.72, 1.0] : [0, 0.13, 0.26, 0.42];
+    call.forEach((n, i) => horn(ctx, NOTE(n), t + beats[i], i === call.length - 1 ? 1.3 : 0.11, v));
+    // The harmony under the last note.
+    const last = t + beats[beats.length - 1];
+    for (const n of rarity >= 3 ? [0, 7, 12] : [0, 4]) horn(ctx, NOTE(n), last, 1.3, v * 0.6);
+    // Drums on the beats; a roll for legends.
+    const hits = rarity === 4 ? [0, 0.13, 0.26, 0.42, 0.52, 0.62, 0.72, 1.0] : rarity >= 2 ? [0, 0.42] : [0.42];
+    hits.forEach((h) => drum(ctx, t + h, 0.5));
+    return beats[beats.length - 1] + 1.8;
+  });
+}
+
+/** Rewards dropping into the treasury. */
+export function collect(count: number) {
+  play((ctx, t) => {
+    const n = Math.min(10, 3 + count * 2);
+    for (let i = 0; i < n; i++) bell(ctx, NOTE(24 + [0, 4, 7, 12, 16][i % 5] + (i > 4 ? 12 : 0)), t + i * 0.055, 0.35, 0.09);
+    return n * 0.055 + 0.6;
+  });
 }
 
 /** A buzz to match: short for common wins, a long rolling one for a legend. */

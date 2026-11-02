@@ -51,7 +51,7 @@ export default function TodayPage() {
   const burst = useDayWon(today, threshold);
   const ascii = useStore((s) => s.settings.statueStyle === "ascii");
   const updateSettings = useStore((s) => s.updateSettings);
-  const gems = useStore((s) => s.achievements.filter((a) => !a.id.startsWith("milestone:")).length);
+  const gems = useStore((s) => s.achievements.filter((a) => !a.unclaimed && !a.id.startsWith("milestone:")).length);
 
   const date = day === "today" ? today : addDays(today, 1);
   const log = days[date];

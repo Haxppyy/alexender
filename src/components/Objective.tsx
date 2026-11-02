@@ -35,7 +35,7 @@ export function ObjectiveIcon({ iconId, fallback, className }: { iconId?: string
   );
 }
 
-/** A mission or goal in a list: icon, title, description and how far along its plan is. */
+/** A mission or goal in a list: icon, title, description, and its plan in one quiet line — how far, and what's next. */
 export function ObjectiveCard({ item, fallbackIcon, meta, onOpen, muted }: { item: ObjectiveFields; fallbackIcon: ReactNode; meta?: ReactNode; onOpen: () => void; muted?: boolean }) {
   const p = stepProgress(item.steps);
   return (
@@ -44,20 +44,25 @@ export function ObjectiveCard({ item, fallbackIcon, meta, onOpen, muted }: { ite
       <span className="min-w-0 flex-1">
         <span className={cn("block text-[19px] leading-snug font-semibold tracking-tight sm:text-[21px]", muted && "text-faint line-through decoration-1")}>{item.title}</span>
         {item.description && <span className="mt-1.5 line-clamp-2 block text-[13.5px] leading-relaxed text-muted">{item.description}</span>}
-        <span className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] text-faint">
-          {p.total > 0 ? (
-            <span className="flex items-center gap-2">
-              <ProgressBar value={p.pct} tone="crystal" className="w-20" />
-              <span className="tabular-nums">
-                {p.done}/{p.total} steps
+        {p.total > 0 ? (
+          <span className="mt-4 block">
+            <span className="flex items-center gap-3">
+              <ProgressBar value={p.pct} tone="crystal" className="h-[3px] flex-1" />
+              <span className="shrink-0 text-[12.5px] text-faint tabular-nums">
+                {p.done}/{p.total}
               </span>
             </span>
-          ) : (
-            <span>No plan yet</span>
-          )}
-          {item.images.length > 0 && <span className="tabular-nums">{item.images.length} image{item.images.length === 1 ? "" : "s"}</span>}
-          {meta}
-        </span>
+            {p.next && !muted && (
+              <span className="mt-2.5 flex items-baseline gap-2 text-[14px]">
+                <span className="shrink-0 text-faint">Next</span>
+                <span className="min-w-0 truncate text-muted">{p.next.text}</span>
+              </span>
+            )}
+          </span>
+        ) : (
+          <span className="mt-3 block text-[13px] text-faint">No plan yet</span>
+        )}
+        {meta && <span className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-faint">{meta}</span>}
       </span>
       <ChevronRight className="mt-1 size-4 shrink-0 text-faint transition-transform group-hover:translate-x-0.5" />
     </button>

@@ -356,6 +356,8 @@ export interface Achievement {
   /** What it was for: the goal's name, the date. */
   detail?: string;
   earnedAt: number;
+  /** Won just now and waiting to be claimed. */
+  unclaimed?: boolean;
   createdAt: number;
   updatedAt?: number;
 }

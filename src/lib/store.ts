@@ -244,6 +244,8 @@ interface Actions {
 
   /** Keep newly earned achievements (ones already kept are left as they are). */
   earn: (list: Omit<Achievement, "createdAt" | "updatedAt">[]) => void;
+  /** Collect rewards that were waiting. */
+  claim: (ids: string[]) => void;
 
   /** Mark a day used or wasted; no mark clears it. */
   markDay: (date: string, mark?: "used" | "wasted") => void;
@@ -714,6 +716,12 @@ export const useStore = create<Store>()(
           const have = new Set(s.achievements.map((a) => a.id));
           const fresh = list.filter((a) => !have.has(a.id)).map((a) => ({ ...a, createdAt: a.earnedAt, updatedAt: a.earnedAt }));
           return fresh.length ? { achievements: [...s.achievements, ...fresh] } : s;
+        }),
+      claim: (ids) =>
+        setState((s) => {
+          const set = new Set(ids);
+          const now = Date.now();
+          return { achievements: s.achievements.map((a) => (set.has(a.id) && a.unclaimed ? { ...a, unclaimed: undefined, updatedAt: now } : a)) };
         }),
 
       markDay: (date, mark) =>

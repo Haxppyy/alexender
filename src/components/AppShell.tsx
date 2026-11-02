@@ -17,9 +17,10 @@ import { Logo } from "./Logo";
 import { Onboarding } from "./Onboarding";
 import { Toaster } from "./ui";
 import { Dialogs } from "./dialog";
-import { AchievementWatcher } from "./Ceremony";
+import { AchievementWatcher, ClaimButton } from "./Ceremony";
 import { GoalReminders } from "./GoalReminders";
 import { PlannedButton, PlannedToday } from "./PlannedToday";
+import { SectionProgressCorner, useSectionProgress } from "./SectionProgress";
 import { TimerWatcher } from "./TimerWatcher";
 
 const MOBILE_PRIMARY = ["/", "/calendar", "/mission", "/journal"];
@@ -269,8 +270,10 @@ function TopBar() {
   const syncMessage = useSync((s) => s.message);
   const pathname = usePathname();
   const section = NAV.find((n) => isActive(pathname, n.href));
-  // Today already shows its own progress large; elsewhere the bar is a quiet reminder.
-  const showProgress = pathname !== "/";
+  // A section with its own progress shows it in this corner; elsewhere it's today's, quietly.
+  // Today already shows its own progress large.
+  const hasSectionProgress = useSectionProgress((s) => s.value !== null);
+  const showProgress = pathname !== "/" && !hasSectionProgress;
 
   return (
     <header className="sticky top-0 z-20 border-b border-line/70 bg-bg/80 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
@@ -319,6 +322,8 @@ function TopBar() {
             </span>
           </Link>
         )}
+        <SectionProgressCorner />
+        <ClaimButton />
         <PlannedButton />
         {hasLock && (
           <button

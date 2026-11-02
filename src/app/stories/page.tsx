@@ -93,11 +93,9 @@ export default function StoriesPage() {
         </div>
       </button>
 
-      <div className="mt-10">
-        <SectionProgress value={(readCount / items.length) * 100} label="read" detail={`${readCount} of ${items.length} stories`} />
-      </div>
+      <SectionProgress value={(readCount / items.length) * 100} label="read" detail={`${readCount} of ${items.length} stories`} />
 
-      <ul className="stagger">
+      <ul className="stagger mt-10">
         {items.map((item, i) => (
           <li key={item.key} style={{ ["--i" as string]: Math.min(i, 12) }}>
             <button

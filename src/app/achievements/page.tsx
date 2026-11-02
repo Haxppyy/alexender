@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { celebrate } from "@/components/Ceremony";
+import { Swords } from "lucide-react";
+import { celebrate, openRewards, useUnclaimed } from "@/components/Ceremony";
 import { Gem, MedalBadge, METAL_COLORS } from "@/components/Treasure";
 import { countsOf, describe, GEMS, MEDALS, type GemKind } from "@/lib/achievements";
 import { useStore } from "@/lib/store";
@@ -11,7 +12,9 @@ const GEM_ORDER: GemKind[] = ["sapphire", "emerald", "ruby", "diamond"];
 
 /** Everything you've earned: your gems, your medals (and the ones still ahead), and the latest wins. */
 export default function AchievementsPage() {
-  const achievements = useStore((s) => s.achievements);
+  // The treasury holds what you've claimed; unclaimed rewards wait in the banner above.
+  const all = useStore((s) => s.achievements);
+  const achievements = useMemo(() => all.filter((a) => !a.unclaimed), [all]);
   const ids = useMemo(() => new Set(achievements.map((a) => a.id)), [achievements]);
   const counts = useMemo(() => countsOf(ids), [ids]);
   const gems = useMemo(() => {
@@ -25,9 +28,23 @@ export default function AchievementsPage() {
   const total = GEM_ORDER.reduce((s, g) => s + gems[g], 0);
   const medalsEarned = MEDALS.filter((m) => ids.has(`milestone:${m.id}`)).length;
   const recent = [...achievements].sort((a, b) => b.earnedAt - a.earnedAt).slice(0, 30);
+  const unclaimed = useUnclaimed();
 
   return (
     <div className="mx-auto max-w-2xl">
+      {unclaimed.length > 0 && (
+        <button
+          onClick={openRewards}
+          className="mb-5 flex w-full items-center gap-3 rounded-2xl border border-[#e0ac34]/40 px-4 py-3.5 text-left transition-transform active:scale-[0.99]"
+          style={{ background: "linear-gradient(90deg, rgb(224 172 52 / 0.14), transparent 80%)" }}
+        >
+          <Swords className="size-5 text-[#e0ac34]" strokeWidth={1.75} />
+          <span className="flex-1 text-[15px] font-semibold">
+            {unclaimed.length} {unclaimed.length === 1 ? "reward" : "rewards"} waiting
+          </span>
+          <span className="victory-claim rounded-full px-4 py-1.5 text-[13px] font-bold text-[#2a1a04]">Claim</span>
+        </button>
+      )}
       {/* The treasury. */}
       <section className="relative overflow-hidden rounded-[32px] border border-line-strong px-5 pt-7 pb-5 text-center" style={{ background: "radial-gradient(120% 80% at 50% 0%, #10161f 0%, #050505 70%)" }}>
         <p className="text-[12px] font-semibold tracking-[0.3em] text-faint uppercase">Treasury</p>

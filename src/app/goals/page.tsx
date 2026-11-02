@@ -62,8 +62,7 @@ export default function GoalsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <header className="mb-8 flex items-end justify-between gap-4">
-        <h1 className="text-[26px] leading-tight font-semibold tracking-tight">Goals</h1>
+      <header className="mb-6 flex justify-end">
         <button
           onClick={() => setAdding(true)}
           className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-line-strong px-5 text-[14.5px] font-medium text-muted transition-colors hover:border-faint hover:text-fg"
