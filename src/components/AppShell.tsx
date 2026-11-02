@@ -18,6 +18,7 @@ import { Onboarding } from "./Onboarding";
 import { Toaster } from "./ui";
 import { Dialogs } from "./dialog";
 import { GoalReminders } from "./GoalReminders";
+import { PlannedButton, PlannedToday } from "./PlannedToday";
 import { TimerWatcher } from "./TimerWatcher";
 
 const MOBILE_PRIMARY = ["/", "/calendar", "/mission", "/journal"];
@@ -196,6 +197,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Dialogs />
         <TimerWatcher />
         <GoalReminders />
+        <PlannedToday />
       </div>
     </LucideProvider>
   );
@@ -315,6 +317,7 @@ function TopBar() {
             </span>
           </Link>
         )}
+        <PlannedButton />
         {hasLock && (
           <button
             aria-label="Lock"

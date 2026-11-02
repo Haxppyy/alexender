@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, Trash2 } from "lucide-react";
+import { BookOpen, ChevronLeft, Cloud, Heart, Lightbulb, Moon, Sun, Trash2, Trophy, Undo2, type LucideIcon } from "lucide-react";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { SectionProgress } from "@/components/SectionProgress";
 import { confirmDialog } from "@/components/dialog";
@@ -13,16 +13,16 @@ import { useClock, useStore } from "@/lib/store";
 import type { JournalCategory, JournalEntry } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-/** What an entry is about. Each has its own colour, so a day reads at a glance. */
-export const CATEGORIES: { value: JournalCategory; label: string; color: string; prompt: string }[] = [
-  { value: "day", label: "My day", color: "var(--hue-sky)", prompt: "How was your day?\n\nWhat happened, what you felt…" },
-  { value: "thoughts", label: "Thoughts", color: "var(--hue-peach)", prompt: "What's on your mind?" },
-  { value: "gratitude", label: "Gratitude", color: "var(--hue-sage)", prompt: "Three things you're grateful for today…" },
-  { value: "lesson", label: "Lesson", color: "var(--hue-teal)", prompt: "What did today teach you?" },
-  { value: "win", label: "Win", color: "var(--hue-amber)", prompt: "What did you get right today?" },
-  { value: "mistake", label: "Mistake", color: "var(--hue-rose)", prompt: "What went wrong — and what will you do differently?" },
-  { value: "idea", label: "Idea", color: "var(--hue-lime)", prompt: "Write the idea down before it's gone…" },
-  { value: "dream", label: "Dream", color: "var(--hue-violet)", prompt: "What did you dream — or dream of?" },
+/** What an entry is about — each with a quiet line icon, no colour, so the page stays calm. */
+export const CATEGORIES: { value: JournalCategory; label: string; icon: LucideIcon; prompt: string }[] = [
+  { value: "day", label: "My day", icon: Sun, prompt: "How was your day?\n\nWhat happened, what you felt…" },
+  { value: "thoughts", label: "Thoughts", icon: Cloud, prompt: "What's on your mind?" },
+  { value: "gratitude", label: "Gratitude", icon: Heart, prompt: "Three things you're grateful for today…" },
+  { value: "lesson", label: "Lesson", icon: BookOpen, prompt: "What did today teach you?" },
+  { value: "win", label: "Win", icon: Trophy, prompt: "What did you get right today?" },
+  { value: "mistake", label: "Mistake", icon: Undo2, prompt: "What went wrong — and what will you do differently?" },
+  { value: "idea", label: "Idea", icon: Lightbulb, prompt: "Write the idea down before it's gone…" },
+  { value: "dream", label: "Dream", icon: Moon, prompt: "What did you dream — or dream of?" },
 ];
 const categoryOf = (c?: JournalCategory) => CATEGORIES.find((x) => x.value === c) ?? CATEGORIES[0];
 
@@ -88,10 +88,9 @@ export default function JournalPage() {
               key={c.value}
               type="button"
               onClick={() => write(c.value)}
-              className="flex h-16 flex-col items-center justify-center gap-1.5 rounded-2xl text-[13px] font-semibold transition-transform active:scale-95"
-              style={{ color: c.color, background: `color-mix(in oklab, ${c.color} 12%, transparent)` }}
+              className="flex h-[72px] flex-col items-center justify-center gap-2 rounded-2xl border border-line bg-surface text-[12.5px] font-medium text-muted transition-[border-color,color,transform] duration-200 hover:border-line-strong hover:text-fg active:scale-95"
             >
-              <span aria-hidden className="size-2 rounded-full" style={{ background: c.color }} />
+              <c.icon className="size-5" strokeWidth={1.5} />
               {c.label}
             </button>
           ))}
@@ -110,7 +109,7 @@ export default function JournalPage() {
         <div className="no-scrollbar -mx-4 mb-8 flex gap-1.5 overflow-x-auto px-4">
           <FilterChip on={!filter} onClick={() => setFilter(null)} label="All" />
           {CATEGORIES.filter((c) => used.has(c.value)).map((c) => (
-            <FilterChip key={c.value} on={filter === c.value} onClick={() => setFilter(filter === c.value ? null : c.value)} label={c.label} color={c.color} />
+            <FilterChip key={c.value} on={filter === c.value} onClick={() => setFilter(filter === c.value ? null : c.value)} label={c.label} icon={c.icon} />
           ))}
         </div>
       )}
@@ -135,13 +134,13 @@ export default function JournalPage() {
                   <li key={e.key}>
                     <button
                       onClick={() => setOpen(e.key)}
-                      className="block w-full rounded-2xl border-l-[3px] px-4 py-3.5 text-left transition-[background-color,transform] active:scale-[0.99]"
-                      style={{ borderColor: c.color, background: `color-mix(in oklab, ${c.color} 7%, var(--surface))` }}
+                      className="block w-full rounded-2xl border border-line bg-surface px-4 py-4 text-left transition-[border-color,transform] hover:border-line-strong active:scale-[0.99]"
                     >
-                      <span className="text-[12px] font-semibold tracking-[0.08em] uppercase" style={{ color: c.color }}>
+                      <span className="flex items-center gap-2 text-[12.5px] text-faint">
+                        <c.icon className="size-4" strokeWidth={1.5} />
                         {c.label}
                       </span>
-                      <span className="mt-1 line-clamp-5 block text-[16.5px] leading-relaxed whitespace-pre-wrap text-fg/90">{e.text}</span>
+                      <span className="mt-2 line-clamp-5 block text-[16.5px] leading-relaxed whitespace-pre-wrap text-fg/90">{e.text}</span>
                     </button>
                   </li>
                 );
@@ -154,15 +153,18 @@ export default function JournalPage() {
   );
 }
 
-function FilterChip({ on, onClick, label, color = "var(--fg)" }: { on: boolean; onClick: () => void; label: string; color?: string }) {
+function FilterChip({ on, onClick, label, icon: Icon }: { on: boolean; onClick: () => void; label: string; icon?: LucideIcon }) {
   return (
     <button
       type="button"
       aria-pressed={on}
       onClick={onClick}
-      className={cn("h-9 shrink-0 rounded-full border px-3.5 text-[13.5px] font-medium transition-colors", !on && "border-line text-muted hover:text-fg")}
-      style={on ? { color, borderColor: `color-mix(in oklab, ${color} 55%, transparent)`, background: `color-mix(in oklab, ${color} 12%, transparent)` } : undefined}
+      className={cn(
+        "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[13.5px] font-medium transition-colors",
+        on ? "border-line-strong bg-surface-2 text-fg" : "border-line text-muted hover:text-fg",
+      )}
     >
+      {Icon && <Icon className="size-3.5" strokeWidth={1.5} />}
       {label}
     </button>
   );
@@ -268,9 +270,12 @@ function Entry({ entryKey, onDone }: { entryKey: string; onDone: () => void }) {
             key={x.value}
             type="button"
             onClick={() => updateJournal(entryKey, { category: x.value })}
-            className="h-8 shrink-0 rounded-full px-3 text-[12.5px] font-semibold transition-colors"
-            style={x.value === c.value ? { color: x.color, background: `color-mix(in oklab, ${x.color} 16%, transparent)` } : { color: "var(--faint)" }}
+            className={cn(
+              "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-medium transition-colors",
+              x.value === c.value ? "bg-surface-2 text-fg" : "text-faint hover:text-muted",
+            )}
           >
+            <x.icon className="size-3.5" strokeWidth={1.5} />
             {x.label}
           </button>
         ))}

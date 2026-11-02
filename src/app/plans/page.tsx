@@ -69,9 +69,9 @@ export default function PlansPage() {
         <h1 className="text-[26px] leading-tight font-semibold tracking-tight">Planning</h1>
         <button
           onClick={() => setAdding(true)}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-line-strong px-4 text-[13px] font-medium text-muted transition-colors hover:border-faint hover:text-fg"
+          className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-line-strong px-5 text-[14.5px] font-medium text-muted transition-colors hover:border-faint hover:text-fg"
         >
-          <Plus className="size-3.5" /> New plan
+          <Plus className="size-4" /> New plan
         </button>
       </header>
 
@@ -84,15 +84,17 @@ export default function PlansPage() {
       )}
 
       {upcoming.length > 0 && filter === "active" && (
-        <section className="mb-8">
-          <h2 className="mb-3 text-[13px] font-medium text-muted">Coming up</h2>
-          <ul className="space-y-1">
+        <section className="mb-8 rounded-3xl border border-line bg-surface p-4">
+          <h2 className="mb-2 text-[12px] font-medium tracking-[0.14em] text-faint uppercase">Coming up</h2>
+          <ul className="divide-y divide-line">
             {upcoming.map(({ plan, step }) => (
-              <li key={step.id} className="flex min-h-10 items-center gap-3">
-                <DueChip due={step.due!} today={today} />
+              <li key={step.id} className="flex min-h-14 items-center gap-3 py-2">
                 <button onClick={() => setOpen(plan.id)} className="min-w-0 flex-1 text-left">
-                  <span className="block text-[14px] leading-snug break-words">{step.text}</span>
-                  <span className="block text-[11.5px] break-words text-faint">{plan.title}</span>
+                  <span className="block text-[15.5px] leading-snug break-words">{step.text}</span>
+                  <span className="mt-0.5 flex items-center gap-2 text-[12.5px] break-words text-faint">
+                    <DueChip due={step.due!} today={today} />
+                    {plan.title}
+                  </span>
                 </button>
                 <IconButton
                   label="Add to Today"
@@ -100,9 +102,8 @@ export default function PlansPage() {
                     addTask({ title: step.text, date: today });
                     toast("Added to Today");
                   }}
-                  className="size-8"
                 >
-                  <CalendarPlus className="size-3.5" />
+                  <CalendarPlus className="size-4" />
                 </IconButton>
               </li>
             ))}
