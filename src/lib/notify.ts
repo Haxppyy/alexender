@@ -21,17 +21,18 @@ export async function askToNotify() {
   return Notification.permission === "granted";
 }
 
-export async function notify(title: string, body: string) {
+/** Show a notification. `tag` replaces an earlier one of the same kind; tapping it opens `url`. */
+export async function notify(title: string, body: string, { tag = "alexander-timer", url = "/timer" } = {}) {
   if (!notifyAllowed()) return;
   const options = {
     body,
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
-    tag: "alexander-timer",
+    tag,
     renotify: true,
     requireInteraction: true,
     vibrate: [220, 100, 220, 100, 220],
-    data: { url: "/timer" },
+    data: { url },
   } as NotificationOptions;
   try {
     const reg = await navigator.serviceWorker?.getRegistration();

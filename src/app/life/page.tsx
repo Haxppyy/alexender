@@ -1,10 +1,17 @@
 "use client";
 
+import { Flame, Moon } from "lucide-react";
 import { useCallback, useId, useMemo, useState } from "react";
 import { AnimatedNumber, Input, ProgressBar, Segmented, Select } from "@/components/ui";
-import { fromKey } from "@/lib/date";
+import { addDays, daysBetween, fromKey, toKey } from "@/lib/date";
 import { computeLife, expectancyFor, formatNumber, LIFE_EXPECTANCY } from "@/lib/life";
+import { tap } from "@/lib/motion";
 import { useClock, useStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
+
+type Mark = "used" | "wasted";
+/** A used day is green; a wasted one goes dark. */
+const MARK_FILL: Record<Mark, string> = { used: "var(--success)", wasted: "#000" };
 
 const DAY = 86_400_000;
 
@@ -33,7 +40,11 @@ function useCycles(now: number) {
 /** Your time, plainly: what's left, how much is gone, and one picture of it. */
 export default function LifePage() {
   const now = useClock((s) => s.now);
+  const today = useClock((s) => s.today);
   const settings = useStore((s) => s.settings);
+  const dayMarks = useStore((s) => s.dayMarks);
+  const marks = useMemo(() => new Map(dayMarks.map((d) => [d.date, d.mark])), [dayMarks]);
+  const [selected, setSelected] = useState(today);
   const updateSettings = useStore((s) => s.updateSettings);
   const [editing, setEditing] = useState(false);
   const view: View = VIEWS.includes(settings.lifeView as View) ? (settings.lifeView as View) : "weeks";
@@ -78,6 +89,8 @@ export default function LifePage() {
         ))}
       </section>
 
+      <MarkDay date={today} marks={marks} title="Today was" />
+
       <section className="mt-14">
         <div className="mb-5 flex justify-center">
           <Segmented<View>
@@ -91,14 +104,19 @@ export default function LifePage() {
             ]}
           />
         </div>
-        {view === "days" && <DayGrid total={Math.round(expectancy * YEAR_DAYS)} lived={life.daysLived} />}
+        {view === "days" && <DayGrid total={Math.round(expectancy * YEAR_DAYS)} lived={life.daysLived} birth={settings.birthDate} marks={marks} />}
         {view === "weeks" && <Grid total={Math.ceil(expectancy) * 52} lived={life.weeksLived} cols={52} labelEvery={10 * 52} labelStep={10} />}
         {/* Two years to a row, so a decade is five rows. */}
         {view === "months" && <Grid total={Math.round(expectancy * 12)} lived={life.monthsLived} cols={24} labelEvery={120} labelStep={10} />}
-        {view === "year" && <YearDays now={now} />}
+        {view === "year" && <YearDays now={now} today={today} marks={marks} selected={selected} onSelect={setSelected} />}
         <p className="mt-4 text-center text-[11.5px] text-faint">
-          {view === "year" ? "Each square is a day of this year." : `Each ${view === "days" ? "dot" : "square"} is one ${view.slice(0, -1)} of your life.`} The dim ones are gone.
+          {view === "year"
+            ? "Each square is a day of this year — tap one to mark it."
+            : `Each ${view === "days" ? "dot" : "square"} is one ${view.slice(0, -1)} of your life. The dim ones are gone.`}
+          {(view === "year" || view === "days") && " Green: used. Dark: wasted."}
         </p>
+        {view === "year" && selected !== today && <MarkDay date={selected} marks={marks} title={fromKey(selected).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })} />}
+        {(view === "year" || view === "days") && <MarkCounts marks={marks} today={today} />}
       </section>
 
       <section className="mt-12 pb-6 text-center">
@@ -168,7 +186,7 @@ const LABELS = 24; // room on the left for the decade numbers
  * Every day of a life, one dot each. Drawn as a few rectangles filled with repeating dot
  * patterns — so the whole life costs a handful of shapes, not 26,000 of them.
  */
-function DayGrid({ total, lived }: { total: number; lived: number }) {
+function DayGrid({ total, lived, birth, marks }: { total: number; lived: number; birth: string; marks: Map<string, Mark> }) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const id = useId().replace(/:/g, "");
   const cols = Math.max(40, Math.floor((width - LABELS) / PITCH));
@@ -216,6 +234,12 @@ function DayGrid({ total, lived }: { total: number; lived: number }) {
               <animate attributeName="stroke-opacity" values="0.6;0.15;0.6" dur="2.4s" repeatCount="indefinite" />
             </circle>
             <rect x={tc * PITCH} y={tr * PITCH} width={DOT} height={DOT} fill="var(--crystal)" />
+            {/* The days you marked: green for used, dark for wasted. */}
+            {[...marks].map(([date, mark]) => {
+              const i = daysBetween(birth, date);
+              if (i < 0 || i >= total || i === today) return null;
+              return <rect key={date} x={(i % cols) * PITCH} y={Math.floor(i / cols) * PITCH} width={DOT} height={DOT} fill={MARK_FILL[mark]} />;
+            })}
           </svg>
         </div>
       )}
@@ -272,8 +296,8 @@ function Grid({ total, lived, cols, labelEvery, labelStep, big }: { total: numbe
   );
 }
 
-/** This year as twelve rows of days: what has gone, today, and what is still ahead. */
-function YearDays({ now }: { now: number }) {
+/** This year as twelve rows of days: gone, today, ahead — and the days you marked. Tap a day to pick it. */
+function YearDays({ now, today, marks, selected, onSelect }: { now: number; today: string; marks: Map<string, Mark>; selected: string; onSelect: (date: string) => void }) {
   const d = new Date(now);
   const year = d.getFullYear();
   const cell = 10;
@@ -284,9 +308,8 @@ function YearDays({ now }: { now: number }) {
   const todayMonth = d.getMonth();
   const todayDate = d.getDate();
 
-  const { past, future } = useMemo(() => {
-    const past: string[] = [];
-    const future: string[] = [];
+  const paths = useMemo(() => {
+    const out: Record<"past" | "future" | Mark, string[]> = { past: [], future: [], used: [], wasted: [] };
     for (let m = 0; m < 12; m++) {
       const days = new Date(year, m + 1, 0).getDate();
       for (let day = 1; day <= days; day++) {
@@ -294,12 +317,28 @@ function YearDays({ now }: { now: number }) {
         const x = (day - 1) * (cell + gap);
         const y = m * (tall + gap);
         const isPast = m < todayMonth || (m === todayMonth && day < todayDate);
-        (isPast ? past : future).push(`M${x},${y}h${cell}v${tall}h-${cell}z`);
+        const mark = isPast ? marks.get(toKey(new Date(year, m, day))) : undefined;
+        out[mark ?? (isPast ? "past" : "future")].push(`M${x},${y}h${cell}v${tall}h-${cell}z`);
       }
     }
-    return { past: past.join(""), future: future.join("") };
-  }, [year, todayMonth, todayDate]);
+    return { past: out.past.join(""), future: out.future.join(""), used: out.used.join(""), wasted: out.wasted.join("") };
+  }, [year, todayMonth, todayDate, marks]);
 
+  const pick = (e: React.MouseEvent<SVGSVGElement>) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - box.left) / box.width) * width;
+    const y = ((e.clientY - box.top) / box.height) * height;
+    const day = Math.floor(x / (cell + gap)) + 1;
+    const m = Math.floor(y / (tall + gap));
+    if (m < 0 || m > 11 || day < 1 || day > new Date(year, m + 1, 0).getDate()) return;
+    const date = toKey(new Date(year, m, day));
+    if (date > today) return;
+    tap(6);
+    onSelect(date);
+  };
+
+  const sel = fromKey(selected);
+  const todayMark = marks.get(today);
   const months = Array.from({ length: 12 }, (_, m) => new Date(year, m, 1).toLocaleDateString(undefined, { month: "narrow" }));
   return (
     <div className="animate-fade relative pl-6">
@@ -308,13 +347,79 @@ function YearDays({ now }: { now: number }) {
           {label}
         </span>
       ))}
-      <svg viewBox={`0 0 ${width} ${height}`} className="block h-auto w-full" role="img" aria-label={`Day ${todayDate} of month ${todayMonth + 1}`}>
-        <path d={past} fill="var(--surface-2)" />
-        <path d={future} fill="var(--fg)" fillOpacity={0.3} />
-        <rect x={(todayDate - 1) * (cell + gap)} y={todayMonth * (tall + gap)} width={cell} height={tall} rx={2} fill="var(--crystal)">
-          <animate attributeName="opacity" values="1;0.4;1" dur="2.4s" repeatCount="indefinite" />
+      <svg viewBox={`0 0 ${width} ${height}`} className="block h-auto w-full cursor-pointer" role="img" aria-label={`Day ${todayDate} of month ${todayMonth + 1}`} onClick={pick}>
+        <path d={paths.past} fill="var(--surface-2)" />
+        <path d={paths.future} fill="var(--fg)" fillOpacity={0.3} />
+        <path d={paths.used} fill={MARK_FILL.used} />
+        <path d={paths.wasted} fill={MARK_FILL.wasted} stroke="var(--line-strong)" strokeWidth={0.8} />
+        <rect x={(todayDate - 1) * (cell + gap)} y={todayMonth * (tall + gap)} width={cell} height={tall} rx={2} fill={todayMark ? MARK_FILL[todayMark] : "var(--crystal)"} stroke={todayMark ? "var(--crystal)" : undefined} strokeWidth={1}>
+          {!todayMark && <animate attributeName="opacity" values="1;0.4;1" dur="2.4s" repeatCount="indefinite" />}
         </rect>
+        {sel.getFullYear() === year && (
+          <rect x={(sel.getDate() - 1) * (cell + gap) - 1.5} y={sel.getMonth() * (tall + gap) - 1.5} width={cell + 3} height={tall + 3} rx={3} fill="none" stroke="var(--fg)" strokeWidth={1.2} />
+        )}
       </svg>
     </div>
+  );
+}
+
+/** Used or wasted — tap again to take it back. */
+function MarkDay({ date, marks, title }: { date: string; marks: Map<string, Mark>; title: string }) {
+  const markDay = useStore((s) => s.markDay);
+  const mark = marks.get(date);
+  const set = (m: Mark) => {
+    tap(m === "used" ? 12 : 24);
+    markDay(date, mark === m ? undefined : m);
+  };
+  return (
+    <section key={date} className="animate-fade mx-auto mt-6 max-w-sm">
+      <p className="mb-2.5 text-center text-[13.5px] text-muted">{title}</p>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          aria-pressed={mark === "used"}
+          onClick={() => set("used")}
+          className={cn(
+            "flex h-14 items-center justify-center gap-2 rounded-2xl border text-[16px] font-semibold transition-[background-color,border-color,color,transform] duration-200 active:scale-[0.97]",
+            mark === "used" ? "border-success bg-success text-black" : "border-line-strong text-muted hover:text-fg",
+          )}
+        >
+          <Flame className="size-5" /> Used
+        </button>
+        <button
+          type="button"
+          aria-pressed={mark === "wasted"}
+          onClick={() => set("wasted")}
+          className={cn(
+            "flex h-14 items-center justify-center gap-2 rounded-2xl border text-[16px] font-semibold transition-[background-color,border-color,color,transform] duration-200 active:scale-[0.97]",
+            mark === "wasted" ? "border-fg/40 bg-black text-fg" : "border-line-strong text-muted hover:text-fg",
+          )}
+        >
+          <Moon className="size-5" /> Wasted
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/** This year and the last 30 days, in marks. */
+function MarkCounts({ marks, today }: { marks: Map<string, Mark>; today: string }) {
+  const year = today.slice(0, 4);
+  const since = addDays(today, -29);
+  let used = 0;
+  let wasted = 0;
+  let used30 = 0;
+  for (const [date, mark] of marks) {
+    if (date.startsWith(year)) {
+      if (mark === "used") used++;
+      else wasted++;
+    }
+    if (date >= since && date <= today && mark === "used") used30++;
+  }
+  if (!used && !wasted) return null;
+  return (
+    <p className="mt-6 text-center text-[13.5px] text-muted tabular-nums">
+      <span className="font-semibold text-success">{used} used</span> · <span className="font-semibold text-fg">{wasted} wasted</span> in {year} · {used30} of the last 30 days used
+    </p>
   );
 }

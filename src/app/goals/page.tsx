@@ -1,12 +1,15 @@
 "use client";
 
-import { Check, Plus, Target } from "lucide-react";
-import { useState } from "react";
+import { Bell, BellOff, Check, Plus, Target } from "lucide-react";
+import { useEffect, useState } from "react";
+import { showReminder, useGoalToOpen } from "@/components/GoalReminders";
 import { ObjectiveCard, ObjectiveForm, ObjectiveView } from "@/components/Objective";
 import { SectionProgress } from "@/components/SectionProgress";
 import { SortableList } from "@/components/Sortable";
 import { Button, Input, Modal } from "@/components/ui";
-import { daysBetween } from "@/lib/date";
+import { daysBetween, formatTime12 } from "@/lib/date";
+import { goalReminder } from "@/lib/motivate";
+import { askToNotify } from "@/lib/notify";
 import { byOrder, useClock, useStore } from "@/lib/store";
 import type { Goal } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -29,12 +32,33 @@ export default function GoalsPage() {
   const { addGoal, updateGoal, deleteGoal, reorder } = useStore.getState();
   const [adding, setAdding] = useState(false);
   const [deadline, setDeadline] = useState("");
-  const [open, setOpen] = useState<string | null>(null);
+  // Arriving from Alexander's reminder opens that goal.
+  const [open, setOpen] = useState<string | null>(() => useGoalToOpen.getState().id);
+  useEffect(() => {
+    useGoalToOpen.setState({ id: null });
+    return useGoalToOpen.subscribe(({ id }) => {
+      if (!id) return;
+      setOpen(id);
+      useGoalToOpen.setState({ id: null });
+    });
+  }, []);
   const active = goals.filter((g) => !g.achieved).sort(byOrder);
   const achieved = goals.filter((g) => g.achieved).sort((a, b) => (b.achievedAt ?? 0) - (a.achievedAt ?? 0));
   const current = goals.find((g) => g.id === open);
 
-  const meta = (g: Goal) => (g.achieved ? <span className="text-success">Achieved</span> : g.deadline ? <DaysLeft deadline={g.deadline} today={today} /> : null);
+  const meta = (g: Goal) =>
+    g.achieved ? (
+      <span className="text-success">Achieved</span>
+    ) : g.deadline || g.remind ? (
+      <span className="inline-flex items-center gap-3">
+        {g.deadline && <DaysLeft deadline={g.deadline} today={today} />}
+        {g.remind && (
+          <span className="inline-flex items-center gap-1 text-crystal/80">
+            <Bell className="size-3" /> {formatTime12(g.remind)}
+          </span>
+        )}
+      </span>
+    ) : null;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -42,9 +66,9 @@ export default function GoalsPage() {
         <h1 className="text-[26px] leading-tight font-semibold tracking-tight">Goals</h1>
         <button
           onClick={() => setAdding(true)}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-line-strong px-4 text-[13px] font-medium text-muted transition-colors hover:border-faint hover:text-fg"
+          className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-line-strong px-5 text-[14.5px] font-medium text-muted transition-colors hover:border-faint hover:text-fg"
         >
-          <Plus className="size-3.5" /> Add goal
+          <Plus className="size-4" /> Add goal
         </button>
       </header>
 
@@ -119,6 +143,7 @@ export default function GoalsPage() {
           onDelete={() => deleteGoal(current.id)}
           onClose={() => setOpen(null)}
           details={
+            <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-3 text-[12px] text-faint">
               <label className="flex items-center gap-2">
                 Deadline
@@ -133,10 +158,49 @@ export default function GoalsPage() {
                 <Check className="size-3.5" /> {current.achieved ? "Achieved" : "Mark achieved"}
               </Button>
             </div>
+            {!current.achieved && <ReminderSettings goal={current} today={today} />}
+            </div>
           }
         />
       )}
     </div>
+  );
+}
+
+/** When Alexander reminds you of this goal, and what he'll say today. */
+function ReminderSettings({ goal, today }: { goal: Goal; today: string }) {
+  const updateGoal = useStore((s) => s.updateGoal);
+  return (
+    <section className="rounded-2xl border border-line bg-surface px-4 py-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="flex items-center gap-2 text-[14px] font-medium">
+          {goal.remind ? <Bell className="size-4 text-crystal" /> : <BellOff className="size-4 text-faint" />}
+          Alexander reminds me daily at
+        </span>
+        <Input
+          type="time"
+          value={goal.remind ?? ""}
+          onChange={(e) => {
+            updateGoal(goal.id, { remind: e.target.value || undefined });
+            if (e.target.value) void askToNotify();
+          }}
+          aria-label="Reminder time"
+          className="h-10 w-auto px-3 text-[14px] [color-scheme:dark]"
+        />
+        {goal.remind && (
+          <button type="button" onClick={() => updateGoal(goal.id, { remind: undefined })} className="h-10 rounded-full px-3 text-[13px] text-faint hover:text-danger">
+            Turn off
+          </button>
+        )}
+      </div>
+      <p className="mt-3 text-[15px] leading-relaxed text-muted">“{goalReminder(goal, today).text}”</p>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <Button size="sm" variant="outline" onClick={() => showReminder(goal.id)}>
+          Show me now
+        </Button>
+        <span className="text-[12px] text-faint">A notification comes while Alexander is open, even in the background. If it was closed, he tells you when you next open it.</span>
+      </div>
+    </section>
   );
 }
 

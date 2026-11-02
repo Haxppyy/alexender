@@ -59,6 +59,8 @@ export interface Goal {
   iconId?: string;
   images: string[];
   steps?: PlanStep[];
+  /** Alexander reminds you of this goal every day at this time (HH:MM). */
+  remind?: string;
   achieved: boolean;
   achievedAt?: number;
   createdAt: number;
@@ -339,6 +341,15 @@ export interface JournalEntry {
   text: string;
   createdAt?: number;
   updatedAt: number;
+}
+
+/** A day you marked as used or wasted. The id is the date. */
+export interface DayMark {
+  id: string;
+  date: string;
+  mark: "used" | "wasted";
+  createdAt: number;
+  updatedAt?: number;
 }
 
 /** Something you're saving money for. */

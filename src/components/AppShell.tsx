@@ -1,6 +1,6 @@
 "use client";
 
-import { CloudOff, LockKeyhole, LucideProvider, Plus } from "lucide-react";
+import { CloudOff, LockKeyhole, LucideProvider } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -17,6 +17,7 @@ import { Logo } from "./Logo";
 import { Onboarding } from "./Onboarding";
 import { Toaster } from "./ui";
 import { Dialogs } from "./dialog";
+import { GoalReminders } from "./GoalReminders";
 import { TimerWatcher } from "./TimerWatcher";
 
 const MOBILE_PRIMARY = ["/", "/calendar", "/mission", "/journal"];
@@ -194,6 +195,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Toaster />
         <Dialogs />
         <TimerWatcher />
+        <GoalReminders />
       </div>
     </LucideProvider>
   );
@@ -408,10 +410,17 @@ function Orb() {
         onClick={() => (open ? close() : setOpenAt(pathname))}
         aria-label={open ? "Close sections" : "All sections"}
         aria-expanded={open}
-        className={cn("orb fixed right-4 z-50 flex size-14 items-center justify-center rounded-full text-white/90 transition-transform duration-300 active:scale-90", open && "rotate-45")}
+        className="orb fixed right-4 z-50 flex size-14 items-center justify-center rounded-full transition-transform duration-200 active:scale-90"
+        data-open={open || undefined}
         style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
       >
-        <Plus className="size-5 drop-shadow" strokeWidth={2} />
+        {/* Four dots — every section — that fold into a cross while the menu is open. */}
+        <span aria-hidden className="orb-dots">
+          <i />
+          <i />
+          <i />
+          <i />
+        </span>
       </button>
     </div>
   );

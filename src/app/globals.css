@@ -302,31 +302,112 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   }
 }
 
-/* The phone's floating orb: a soft crystal sphere that breathes, and the menu that fans out of it. */
+/*
+ * The phone's orb: a black disc with one arc of crystal light slowly circling its edge, and four
+ * dots (every section) that fold into a cross while the menu is open. Then the menu fans out of it.
+ */
 .orb {
-  background: radial-gradient(circle at 32% 28%, #e8f6ff 0%, #9fd6f5 22%, #4f9fcf 55%, #173a52 100%);
+  isolation: isolate;
+  background: radial-gradient(circle at 50% 30%, #1a1a19 0%, #070707 70%);
   box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.08),
-    inset 0 -6px 14px rgb(0 0 0 / 0.35);
+    0 0 0 1px rgb(255 255 255 / 0.07),
+    0 14px 34px rgb(0 0 0 / 0.75);
 }
+/* The circling arc: a conic gradient cut down to a thin ring. */
 .orb::before {
   content: "";
   position: absolute;
   inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 200deg, color-mix(in oklab, var(--crystal) 40%, transparent) 280deg, var(--crystal) 350deg, transparent 360deg);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: orb-spin 5s linear infinite;
+}
+/* A faint glow under it, so it reads as light rather than paint. */
+.orb::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
   z-index: -1;
   border-radius: inherit;
-  box-shadow: 0 12px 38px rgb(79 159 207 / 0.6);
-  animation: orb-breathe 4.5s ease-in-out infinite;
-  will-change: opacity;
+  box-shadow: 0 0 22px rgb(142 205 242 / 0.22);
 }
-@keyframes orb-breathe {
-  0%,
-  100% {
-    opacity: 0.55;
+.orb[data-open]::before {
+  animation-duration: 1.4s;
+}
+@keyframes orb-spin {
+  to {
+    transform: rotate(360deg);
   }
-  50% {
-    opacity: 1;
-  }
+}
+.orb-dots {
+  position: relative;
+  width: 16px;
+  height: 16px;
+}
+.orb-dots > i {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: var(--fg);
+  transition:
+    transform 0.32s var(--ease-spring),
+    width 0.32s var(--ease-out),
+    height 0.32s var(--ease-out),
+    background-color 0.2s;
+}
+.orb-dots > i:nth-child(1) {
+  left: 0;
+  top: 0;
+}
+.orb-dots > i:nth-child(2) {
+  right: 0;
+  top: 0;
+  background: var(--crystal);
+}
+.orb-dots > i:nth-child(3) {
+  left: 0;
+  bottom: 0;
+}
+.orb-dots > i:nth-child(4) {
+  right: 0;
+  bottom: 0;
+}
+/* Open: the dots slide to the middle and stretch into the two strokes of a cross. */
+.orb[data-open] .orb-dots > i {
+  width: 18px;
+  height: 2px;
+  background: var(--fg);
+}
+.orb[data-open] .orb-dots > i:nth-child(1),
+.orb[data-open] .orb-dots > i:nth-child(4) {
+  transform: translate(var(--tx), var(--ty)) rotate(45deg);
+}
+.orb[data-open] .orb-dots > i:nth-child(2),
+.orb[data-open] .orb-dots > i:nth-child(3) {
+  transform: translate(var(--tx), var(--ty)) rotate(-45deg);
+}
+.orb-dots > i:nth-child(1) {
+  --tx: -1px;
+  --ty: 7px;
+}
+.orb-dots > i:nth-child(2) {
+  --tx: 1px;
+  --ty: 7px;
+}
+.orb-dots > i:nth-child(3) {
+  --tx: -1px;
+  --ty: -7px;
+}
+.orb-dots > i:nth-child(4) {
+  --tx: 1px;
+  --ty: -7px;
 }
 @keyframes orb-open {
   from {
