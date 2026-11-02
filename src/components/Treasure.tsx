@@ -197,3 +197,101 @@ export function VictoryEmblem({ gem, size = 200 }: { gem: GemKind; size?: number
     </span>
   );
 }
+
+/**
+ * A treasure chest, drawn with some care: oak planks with grain, iron corners and rivets, gold
+ * bands and a lock plate. Open, the lid tips back and the inside glows with coins and light.
+ */
+export function Chest({ size = 72, open, className }: { size?: number; open?: boolean; className?: string }) {
+  const id = useId().replace(/:/g, "");
+  const rivets = [16, 84];
+  return (
+    <svg viewBox="0 0 100 90" width={size} height={size * 0.9} className={cn("overflow-visible", className)} aria-hidden>
+      <defs>
+        <linearGradient id={`${id}-wood`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#7a4822" />
+          <stop offset="0.55" stopColor="#5a3214" />
+          <stop offset="1" stopColor="#2b1608" />
+        </linearGradient>
+        <linearGradient id={`${id}-lid`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#8a5428" />
+          <stop offset="1" stopColor="#4a2810" />
+        </linearGradient>
+        <linearGradient id={`${id}-gold`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#fff1b8" />
+          <stop offset="0.45" stopColor="#e0ac34" />
+          <stop offset="0.8" stopColor="#8a5a12" />
+          <stop offset="1" stopColor="#c9952a" />
+        </linearGradient>
+        <linearGradient id={`${id}-iron`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#9aa2ad" />
+          <stop offset="0.5" stopColor="#4d535c" />
+          <stop offset="1" stopColor="#2a2e33" />
+        </linearGradient>
+        <radialGradient id={`${id}-light`} cx="0.5" cy="1" r="1">
+          <stop offset="0" stopColor="#fff6d6" stopOpacity="1" />
+          <stop offset="0.35" stopColor="#f5c95a" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#e0ac34" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      {/* Light pouring out when open. */}
+      <g style={{ opacity: open ? 1 : 0, transition: "opacity 0.6s ease-out" }}>
+        <ellipse cx="50" cy="30" rx="58" ry="44" fill={`url(#${id}-light)`} />
+        {[-36, -18, 0, 18, 36].map((a) => (
+          <path key={a} d="M50 40 L44 -30 L56 -30 Z" fill="#fff3c2" opacity="0.22" transform={`rotate(${a} 50 40)`} />
+        ))}
+      </g>
+
+      {/* The inside: dark, heaped with gold. */}
+      {open && (
+        <g>
+          <rect x="12" y="34" width="76" height="12" rx="2" fill="#1a0d04" />
+          {[20, 30, 40, 50, 60, 70, 80].map((x, i) => (
+            <ellipse key={x} cx={x} cy={38 + (i % 2) * 2} rx="6" ry="3" fill={`url(#${id}-gold)`} stroke="#8a5a12" strokeWidth="0.5" />
+          ))}
+          <ellipse cx="44" cy="33" rx="5" ry="2.6" fill={`url(#${id}-gold)`} stroke="#8a5a12" strokeWidth="0.5" />
+          <ellipse cx="58" cy="32" rx="5" ry="2.6" fill={`url(#${id}-gold)`} stroke="#8a5a12" strokeWidth="0.5" />
+        </g>
+      )}
+
+      {/* Body: planks with grain. */}
+      <rect x="10" y="42" width="80" height="42" rx="4" fill={`url(#${id}-wood)`} />
+      <g stroke="#2b1608" strokeOpacity="0.55" strokeWidth="0.8">
+        <line x1="10" y1="56" x2="90" y2="56" />
+        <line x1="10" y1="70" x2="90" y2="70" />
+      </g>
+      <g stroke="#a06a38" strokeOpacity="0.35" strokeWidth="0.5" fill="none">
+        <path d="M32 48 q8 2 16 0 t16 0" />
+        <path d="M34 62 q8 -2 16 0 t14 0" />
+        <path d="M32 77 q9 2 18 0 t12 0" />
+      </g>
+      <rect x="10" y="42" width="80" height="5" fill={`url(#${id}-gold)`} />
+      <rect x="21" y="42" width="7" height="42" fill={`url(#${id}-gold)`} />
+      <rect x="72" y="42" width="7" height="42" fill={`url(#${id}-gold)`} />
+      {/* Iron corners and rivets. */}
+      <path d="M10 72 V84 H22 Z M90 72 V84 H78 Z" fill={`url(#${id}-iron)`} />
+      {rivets.map((x) => (
+        <g key={x} fill="#f6e3a6">
+          <circle cx={x === 16 ? 24.5 : 75.5} cy="50" r="1.1" />
+          <circle cx={x === 16 ? 24.5 : 75.5} cy="64" r="1.1" />
+          <circle cx={x === 16 ? 24.5 : 75.5} cy="78" r="1.1" />
+        </g>
+      ))}
+      {/* Lock plate. */}
+      <path d="M42 47 h16 v14 q0 5 -8 7 q-8 -2 -8 -7 Z" fill={`url(#${id}-gold)`} stroke="#6b4310" strokeWidth="0.6" />
+      <path d="M50 53 a2.3 2.3 0 1 1 0.01 0 M49 55 h2 l0.6 5 h-3.2 Z" fill="#2b1608" />
+
+      {/* Lid: closed, or tipped back on its hinge. */}
+      <g style={{ transformOrigin: "12px 42px", transformBox: "view-box", transform: open ? "translateY(-6px) rotate(-22deg)" : "none", transition: "transform 0.55s cubic-bezier(0.34,1.56,0.64,1)" }}>
+        <path d="M10 42 V30 Q10 13 50 13 Q90 13 90 30 V42 Z" fill={`url(#${id}-lid)`} />
+        <path d="M14 30 Q14 18 50 18 Q86 18 86 30" fill="none" stroke="#a06a38" strokeOpacity="0.35" strokeWidth="0.6" />
+        <path d="M10 30 Q10 13 50 13 Q90 13 90 30" fill="none" stroke={`url(#${id}-gold)`} strokeWidth="4" />
+        <rect x="21" y="15" width="7" height="27" fill={`url(#${id}-gold)`} />
+        <rect x="72" y="15" width="7" height="27" fill={`url(#${id}-gold)`} />
+        <rect x="10" y="38" width="80" height="4" fill={`url(#${id}-gold)`} />
+        <path d="M30 20 Q50 15 70 20" fill="none" stroke="#fff" strokeOpacity="0.18" strokeWidth="2" strokeLinecap="round" />
+      </g>
+    </svg>
+  );
+}

@@ -1,6 +1,7 @@
 import {
   AchievementsIcon,
   BooksIcon,
+  CampaignIcon,
   BucketIcon,
   CalendarIcon,
   ClipsIcon,
@@ -28,6 +29,7 @@ export const NAV = [
   { href: "/", label: "Today", icon: TodayIcon },
   { href: "/calendar", label: "Calendar", icon: CalendarIcon },
   { href: "/achievements", label: "Achievements", icon: AchievementsIcon },
+  { href: "/map", label: "Campaign", icon: CampaignIcon },
   { href: "/habits", label: "Habits", icon: HabitsIcon },
   { href: "/workout", label: "Workout", icon: WorkoutIcon },
   { href: "/timer", label: "Timer", icon: TimerIcon },

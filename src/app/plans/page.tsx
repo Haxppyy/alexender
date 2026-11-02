@@ -12,6 +12,9 @@ import type { Plan, PlanPriority, PlanStatus } from "@/lib/types";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { cn } from "@/lib/utils";
 import { confirmDialog } from "@/components/dialog";
+import { openRewards } from "@/components/Ceremony";
+import { RewardPicker, RewardSection } from "@/components/Rewards";
+import type { PersonalReward } from "@/lib/types";
 
 const STATUSES: { value: PlanStatus; label: string }[] = [
   { value: "todo", label: "To do" },
@@ -205,13 +208,14 @@ function NewPlanForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
   const [priority, setPriority] = useState<PlanPriority>("med");
+  const [reward, setReward] = useState<PersonalReward>();
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         if (!title.trim()) return;
         const id = addPlan(title.trim());
-        updatePlan(id, { description: description.trim() || undefined, deadline: deadline || undefined, priority, status: "todo" });
+        updatePlan(id, { description: description.trim() || undefined, deadline: deadline || undefined, priority, status: "todo", ...(reward?.text.trim() && { reward: { ...reward, text: reward.text.trim() } }) });
         onCreated(id);
       }}
       className="space-y-4"
@@ -234,6 +238,7 @@ function NewPlanForm({ onCancel, onCreated }: { onCancel: () => void; onCreated:
           <Segmented value={priority} onChange={setPriority} options={PRIORITIES} />
         </div>
       </div>
+      <RewardPicker value={reward} onChange={setReward} />
       <div className="flex justify-end gap-2 pt-1">
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancel
@@ -265,6 +270,7 @@ function PlanView({ plan, onClose }: { plan: Plan; onClose: () => void }) {
   const set = (patch: Partial<Plan>) => updatePlan(plan.id, patch);
   const p = stepProgress(plan.steps);
   const status = statusOf(plan);
+  const earned = useStore((s) => s.achievements.find((a) => a.id === `plan:${plan.id}`));
   useBackToClose(true, onClose, { lockScroll: true });
 
 
@@ -344,6 +350,10 @@ function PlanView({ plan, onClose }: { plan: Plan; onClose: () => void }) {
             </Button>
           </div>
         )}
+
+        <div className="mt-6">
+          <RewardSection reward={plan.reward} onChange={(reward) => set({ reward })} done={status === "done"} earned={earned} onClaim={openRewards} what="plan" />
+        </div>
 
         <section className="mt-10">
           <StepPlanner

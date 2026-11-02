@@ -13,6 +13,7 @@ import {
   Hourglass,
   Landmark,
   Lightbulb,
+  Map as MapIcon,
   Dumbbell,
   GraduationCap,
   MessageCircleQuestionMark,
@@ -60,4 +61,5 @@ export const SettingsIcon = thin(Settings2);
 export const SavingsIcon = thin(PiggyBank);
 export const ClipsIcon = thin(Clapperboard);
 export const AchievementsIcon = thin(Gem);
+export const CampaignIcon = thin(MapIcon);
 export const MoreIcon = thin(Ellipsis);

@@ -4,6 +4,7 @@ import { Gem, Plus } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AsciiStatue } from "@/components/AsciiStatue";
+import { DayReward } from "@/components/DayReward";
 import { Statue } from "@/components/brand";
 import { TaskList } from "@/components/TaskList";
 import { AnimatedNumber, Segmented, toast } from "@/components/ui";
@@ -146,6 +147,13 @@ export default function TodayPage() {
       <AddTask date={date} placeholder={day === "today" ? "What needs doing?" : "What needs doing tomorrow?"} />
 
       <TaskList date={date} emptyText={day === "today" ? "Add the one task that matters most." : "Plan tomorrow tonight."} />
+
+      {/* The day's prize, in sight but locked until every task is done. */}
+      {day === "today" && (
+        <div className="mt-8">
+          <DayReward date={today} />
+        </div>
+      )}
     </div>
   );
 }

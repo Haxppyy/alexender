@@ -98,9 +98,10 @@ export function newlyEarned(s: Pick<Data, "days" | "tasks" | "plans" | "goals" |
     const last = Math.max(0, ...s.tasks.filter((t) => t.date === date).map((t) => t.completedAt ?? 0));
     add({ id: `perfect-day:${date}`, title: "Perfect day", detail: longDate(date), earnedAt: date === today ? now : last || fromKey(date).getTime() + 18 * 3_600_000 });
   }
-  for (const p of s.plans) if (p.status === "done") add({ id: `plan:${p.id}`, title: "Plan complete", detail: p.title, earnedAt: p.updatedAt ?? now });
-  for (const g of s.goals) if (g.achieved) add({ id: `goal:${g.id}`, title: "Goal achieved", detail: g.title, earnedAt: g.achievedAt ?? now });
-  for (const m of s.missions) if (m.accomplished) add({ id: `mission:${m.id}`, title: "Mission accomplished", detail: m.text, earnedAt: m.accomplishedAt ?? now });
+  const withReward = (r?: { text: string; icon?: string }) => (r?.text.trim() ? { reward: r } : {});
+  for (const p of s.plans) if (p.status === "done") add({ id: `plan:${p.id}`, title: "Plan complete", detail: p.title, earnedAt: p.updatedAt ?? now, ...withReward(p.reward) });
+  for (const g of s.goals) if (g.achieved) add({ id: `goal:${g.id}`, title: "Goal achieved", detail: g.title, earnedAt: g.achievedAt ?? now, ...withReward(g.reward) });
+  for (const m of s.missions) if (m.accomplished) add({ id: `mission:${m.id}`, title: "Mission accomplished", detail: m.text, earnedAt: m.accomplishedAt ?? now, ...withReward(m.reward) });
 
   const counts = countsOf([...have, ...out.map((a) => a.id)]);
   for (const m of MEDALS) if (m.count(counts) >= m.need) add({ id: `milestone:${m.id}`, title: m.title, detail: m.description, earnedAt: now });

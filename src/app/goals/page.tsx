@@ -2,7 +2,9 @@
 
 import { Bell, BellOff, Check, Plus, Target } from "lucide-react";
 import { useEffect, useState } from "react";
+import { openRewards } from "@/components/Ceremony";
 import { showReminder, useGoalToOpen } from "@/components/GoalReminders";
+import { RewardSection } from "@/components/Rewards";
 import { ObjectiveCard, ObjectiveForm, ObjectiveView } from "@/components/Objective";
 import { SectionProgress } from "@/components/SectionProgress";
 import { SortableList } from "@/components/Sortable";
@@ -28,6 +30,7 @@ function DaysLeft({ deadline, today }: { deadline: string; today: string }) {
 /** Goals — concrete targets with a deadline, a vision and a plan. Separate from your missions. */
 export default function GoalsPage() {
   const goals = useStore((s) => s.goals);
+  const achievements = useStore((s) => s.achievements);
   const today = useClock((s) => s.today);
   const { addGoal, updateGoal, deleteGoal, reorder } = useStore.getState();
   const [adding, setAdding] = useState(false);
@@ -122,9 +125,9 @@ export default function GoalsPage() {
               setAdding(false);
               setDeadline("");
             }}
-            onSave={({ title, description, iconId }) => {
+            onSave={({ title, description, iconId, reward }) => {
               const id = addGoal({ title, why: description, deadline: deadline || undefined });
-              if (iconId) updateGoal(id, { iconId, steps: [] });
+              if (iconId || reward) updateGoal(id, { ...(iconId && { iconId }), ...(reward && { reward }), steps: [] });
               setAdding(false);
               setDeadline("");
               setOpen(id);
@@ -157,6 +160,14 @@ export default function GoalsPage() {
                 <Check className="size-3.5" /> {current.achieved ? "Achieved" : "Mark achieved"}
               </Button>
             </div>
+            <RewardSection
+              reward={current.reward}
+              onChange={(reward) => updateGoal(current.id, { reward })}
+              done={current.achieved}
+              earned={achievements.find((a) => a.id === `goal:${current.id}`)}
+              onClaim={openRewards}
+              what="goal"
+            />
             {!current.achieved && <ReminderSettings goal={current} today={today} />}
             </div>
           }

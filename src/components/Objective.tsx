@@ -4,7 +4,8 @@ import { ChevronRight, ImagePlus, Trash2, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { deleteImages, saveImages } from "@/lib/images";
-import type { PlanStep } from "@/lib/types";
+import type { PersonalReward, PlanStep } from "@/lib/types";
+import { RewardPicker } from "./Rewards";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { cn } from "@/lib/utils";
 import { StepPlanner, stepProgress } from "./StepPlanner";
@@ -70,16 +71,17 @@ export function ObjectiveCard({ item, fallbackIcon, meta, onOpen, muted }: { ite
 }
 
 /** Title, description and icon — used when adding a mission or goal. */
-export function ObjectiveForm({ kind, onSave, onCancel, extra }: { kind: string; onSave: (f: { title: string; description?: string; iconId?: string }) => void; onCancel: () => void; extra?: ReactNode }) {
+export function ObjectiveForm({ kind, onSave, onCancel, extra }: { kind: string; onSave: (f: { title: string; description?: string; iconId?: string; reward?: PersonalReward }) => void; onCancel: () => void; extra?: ReactNode }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [iconId, setIconId] = useState<string>();
+  const [reward, setReward] = useState<PersonalReward>();
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         if (!title.trim()) return;
-        onSave({ title: title.trim(), description: description.trim() || undefined, iconId });
+        onSave({ title: title.trim(), description: description.trim() || undefined, iconId, reward: reward?.text.trim() ? { ...reward, text: reward.text.trim() } : undefined });
       }}
       className="space-y-4"
     >
@@ -107,6 +109,7 @@ export function ObjectiveForm({ kind, onSave, onCancel, extra }: { kind: string;
         <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={`What this ${kind} means to you, and what it looks like when it's done`} />
       </label>
       {extra}
+      <RewardPicker value={reward} onChange={setReward} />
       <div className="flex justify-end gap-2 pt-1">
         <Button
           type="button"

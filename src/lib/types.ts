@@ -25,6 +25,13 @@ export interface Task {
   failed?: boolean;
 }
 
+/** Something real you promise yourself for finishing — a meal, a film, a trip. */
+export interface PersonalReward {
+  text: string;
+  /** Which picture goes with it (see components/Rewards). */
+  icon?: string;
+}
+
 export interface DayLog {
   date: string;
   total: number;
@@ -44,6 +51,8 @@ export interface Mission {
   images: string[];
   /** The plan that gets you there. */
   steps?: PlanStep[];
+  /** What you'll treat yourself to when it's accomplished. */
+  reward?: PersonalReward;
   /** You declared it done. */
   accomplished?: boolean;
   accomplishedAt?: number;
@@ -62,6 +71,8 @@ export interface Goal {
   iconId?: string;
   images: string[];
   steps?: PlanStep[];
+  /** What you'll treat yourself to when it's achieved. */
+  reward?: PersonalReward;
   /** Alexander reminds you of this goal every day at this time (HH:MM). */
   remind?: string;
   achieved: boolean;
@@ -166,6 +177,8 @@ export interface Plan {
   priority?: PlanPriority;
   note?: string;
   steps: PlanStep[];
+  /** What you'll treat yourself to when it's done. */
+  reward?: PersonalReward;
   createdAt: number;
   updatedAt?: number;
   order: number;
@@ -355,6 +368,8 @@ export interface Achievement {
   title: string;
   /** What it was for: the goal's name, the date. */
   detail?: string;
+  /** The reward you set yourself for it, as it was when you won. */
+  reward?: PersonalReward;
   earnedAt: number;
   /** Won just now and waiting to be claimed. */
   unclaimed?: boolean;

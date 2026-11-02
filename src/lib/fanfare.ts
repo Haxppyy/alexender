@@ -3,7 +3,7 @@ import type { Rarity } from "./achievements";
 /*
  * The sounds of winning, made with Web Audio — no files.
  *  - victory(): a brass call, "ta-ta-ta-taaa", over war drums; grander the rarer the win.
- *  - collect(): bright pings, like gems dropping into the treasury, when you claim.
+ *  - ping(): a bright note as each reward drops into the chest when you claim.
  */
 
 const NOTE = (n: number) => 261.63 * Math.pow(2, n / 12); // semitones from middle C
@@ -85,12 +85,13 @@ export function victory(rarity: Rarity) {
   });
 }
 
-/** Rewards dropping into the treasury. */
-export function collect(count: number) {
+/** One reward landing in the chest — each a step higher than the last. */
+export function ping(i: number) {
   play((ctx, t) => {
-    const n = Math.min(10, 3 + count * 2);
-    for (let i = 0; i < n; i++) bell(ctx, NOTE(24 + [0, 4, 7, 12, 16][i % 5] + (i > 4 ? 12 : 0)), t + i * 0.055, 0.35, 0.09);
-    return n * 0.055 + 0.6;
+    const n = 24 + [0, 4, 7, 12, 16, 19, 24][Math.min(i, 6)];
+    bell(ctx, NOTE(n), t, 0.5, 0.12);
+    bell(ctx, NOTE(n + 12), t + 0.04, 0.35, 0.05);
+    return 0.6;
   });
 }
 

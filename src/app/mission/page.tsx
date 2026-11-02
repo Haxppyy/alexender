@@ -6,6 +6,8 @@ import { ObjectiveCard, ObjectiveForm, ObjectiveView } from "@/components/Object
 import { SectionProgress } from "@/components/SectionProgress";
 import { stepProgress } from "@/components/StepPlanner";
 import { SortableList } from "@/components/Sortable";
+import { openRewards } from "@/components/Ceremony";
+import { RewardSection } from "@/components/Rewards";
 import { Button, Modal } from "@/components/ui";
 import { byOrder, MAX_MISSIONS, useStore } from "@/lib/store";
 import type { Mission } from "@/lib/types";
@@ -15,6 +17,7 @@ const flag = <Flag className="size-5" strokeWidth={1.5} />;
 /** Up to three missions — the few things your life is aimed at. Each has a vision and a plan. */
 export default function MissionPage() {
   const missions = useStore((s) => s.missions);
+  const achievements = useStore((s) => s.achievements);
   const { addMission, updateMission, deleteMission, reorder } = useStore.getState();
   const [adding, setAdding] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
@@ -64,8 +67,9 @@ export default function MissionPage() {
           <ObjectiveForm
             kind="mission"
             onCancel={() => setAdding(false)}
-            onSave={({ title, description, iconId }) => {
+            onSave={({ title, description, iconId, reward }) => {
               const id = addMission(title, { description, iconId });
+              if (id && reward) updateMission(id, { reward });
               setAdding(false);
               if (id) setOpen(id);
             }}
@@ -82,13 +86,23 @@ export default function MissionPage() {
           onDelete={() => deleteMission(current.id)}
           onClose={() => setOpen(null)}
           details={
-            <Button
-              size="sm"
-              variant={current.accomplished ? "outline" : "primary"}
-              onClick={() => updateMission(current.id, current.accomplished ? { accomplished: false, accomplishedAt: undefined } : { accomplished: true, accomplishedAt: Date.now() })}
-            >
-              <Check className="size-3.5" /> {current.accomplished ? "Accomplished" : "Mark accomplished"}
-            </Button>
+            <div className="space-y-4">
+              <Button
+                size="sm"
+                variant={current.accomplished ? "outline" : "primary"}
+                onClick={() => updateMission(current.id, current.accomplished ? { accomplished: false, accomplishedAt: undefined } : { accomplished: true, accomplishedAt: Date.now() })}
+              >
+                <Check className="size-3.5" /> {current.accomplished ? "Accomplished" : "Mark accomplished"}
+              </Button>
+              <RewardSection
+                reward={current.reward}
+                onChange={(reward) => updateMission(current.id, { reward })}
+                done={!!current.accomplished}
+                earned={achievements.find((a) => a.id === `mission:${current.id}`)}
+                onClaim={openRewards}
+                what="mission"
+              />
+            </div>
           }
         />
       )}
