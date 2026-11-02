@@ -543,6 +543,93 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   transition: filter 1.2s var(--ease-out);
 }
 
+/* An achievement revealed: the room darkens, light turns behind the prize, it rises in with sparks. */
+.reveal {
+  animation: fade-in 0.35s var(--ease-out) both;
+}
+.reveal-rays {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: 160vmax;
+  height: 160vmax;
+  margin: -80vmax 0 0 -80vmax;
+  background: repeating-conic-gradient(from 0deg, color-mix(in oklab, var(--glow) 32%, transparent) 0deg 5deg, transparent 5deg 15deg);
+  -webkit-mask: radial-gradient(circle, #000 0%, transparent 42%);
+  mask: radial-gradient(circle, #000 0%, transparent 42%);
+  animation:
+    fade-in 1.2s 0.2s var(--ease-out) both,
+    orb-spin 40s linear infinite;
+}
+.reveal-halo {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  border-radius: 9999px;
+  border: 2px solid var(--glow);
+  animation: halo 1.4s 0.3s var(--ease-out) both;
+}
+@keyframes prize-in {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.3) rotate(-18deg);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1.12) rotate(4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes prize-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.reveal-prize {
+  animation:
+    prize-in 0.9s var(--ease-spring) both,
+    prize-float 4s 1s ease-in-out infinite;
+}
+.reveal-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px;
+  border-radius: 9999px;
+  box-shadow: 0 0 10px currentColor;
+  animation: reveal-spark 1.3s var(--ease-out) both;
+}
+@keyframes reveal-spark {
+  from {
+    opacity: 1;
+    transform: rotate(var(--a)) translateY(0) scale(1.2);
+  }
+  to {
+    opacity: 0;
+    transform: rotate(var(--a)) translateY(calc(var(--d) * -1)) scale(0.2);
+  }
+}
+.reveal-text {
+  animation: rise 0.6s var(--ease-out) both;
+}
+.reveal-claim {
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.25) inset,
+    0 12px 40px color-mix(in oklab, var(--glow) 45%, transparent);
+}
+
 /* The running timer's ring breathes, slowly. */
 @keyframes breathe {
   0%,

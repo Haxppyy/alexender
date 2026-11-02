@@ -44,6 +44,9 @@ export interface Mission {
   images: string[];
   /** The plan that gets you there. */
   steps?: PlanStep[];
+  /** You declared it done. */
+  accomplished?: boolean;
+  accomplishedAt?: number;
   createdAt: number;
   /** Manual position (drag to reorder). */
   order?: number;
@@ -341,6 +344,20 @@ export interface JournalEntry {
   text: string;
   createdAt?: number;
   updatedAt: number;
+}
+
+/**
+ * Something earned, kept for good — unticking a task later doesn't take it back. The id says what
+ * it was for: "perfect-day:2026-11-02", "goal:<id>", "milestone:perfect-7".
+ */
+export interface Achievement {
+  id: string;
+  title: string;
+  /** What it was for: the goal's name, the date. */
+  detail?: string;
+  earnedAt: number;
+  createdAt: number;
+  updatedAt?: number;
 }
 
 /** A day you marked as used or wasted. The id is the date. */

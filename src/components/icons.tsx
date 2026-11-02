@@ -8,6 +8,7 @@ import {
   Compass,
   Ellipsis,
   Feather,
+  Gem,
   Flag,
   Hourglass,
   Landmark,
@@ -58,4 +59,5 @@ export const QuestionsIcon = thin(MessageCircleQuestionMark);
 export const SettingsIcon = thin(Settings2);
 export const SavingsIcon = thin(PiggyBank);
 export const ClipsIcon = thin(Clapperboard);
+export const AchievementsIcon = thin(Gem);
 export const MoreIcon = thin(Ellipsis);

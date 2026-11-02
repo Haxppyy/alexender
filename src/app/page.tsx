@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Gem, Plus } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AsciiStatue } from "@/components/AsciiStatue";
 import { Statue } from "@/components/brand";
@@ -27,13 +28,13 @@ function useDayWon(today: string, threshold: number) {
         const now = s.days[today];
         const before = prev.days[today];
         const won = (l?: { total: number; pct: number }) => !!l && l.total > 0 && l.pct >= threshold;
+        // A perfect day gets its own moment (the sapphire); crossing the line gets a word.
         if (won(now) && !won(before)) {
           setBurst(Date.now());
           tap(24);
-          toast(now!.pct >= 100 ? "Every task done. A perfect day." : "Day won. Well fought.");
+          if (now!.pct < 100) toast("Day won. Well fought.");
         } else if (now?.pct === 100 && (before?.pct ?? 0) < 100) {
           setBurst(Date.now());
-          toast("Every task done. A perfect day.");
         }
       }),
     [today, threshold],
@@ -50,6 +51,7 @@ export default function TodayPage() {
   const burst = useDayWon(today, threshold);
   const ascii = useStore((s) => s.settings.statueStyle === "ascii");
   const updateSettings = useStore((s) => s.updateSettings);
+  const gems = useStore((s) => s.achievements.filter((a) => !a.id.startsWith("milestone:")).length);
 
   const date = day === "today" ? today : addDays(today, 1);
   const log = days[date];
@@ -128,6 +130,10 @@ export default function TodayPage() {
               )}
               {notDone > 0 && <span className="text-danger/80"> · {notDone} not done</span>}
             </p>
+            <Link href="/achievements" className="mt-3 inline-flex items-center gap-1.5 text-[13px] text-faint transition-colors hover:text-fg">
+              <Gem className="size-3.5" strokeWidth={1.75} />
+              {gems ? `${gems} ${gems === 1 ? "gem" : "gems"}` : "Finish every task for a sapphire"}
+            </Link>
           </div>
         </header>
       ) : (

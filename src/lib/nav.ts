@@ -1,4 +1,5 @@
 import {
+  AchievementsIcon,
   BooksIcon,
   BucketIcon,
   CalendarIcon,
@@ -26,6 +27,7 @@ import {
 export const NAV = [
   { href: "/", label: "Today", icon: TodayIcon },
   { href: "/calendar", label: "Calendar", icon: CalendarIcon },
+  { href: "/achievements", label: "Achievements", icon: AchievementsIcon },
   { href: "/habits", label: "Habits", icon: HabitsIcon },
   { href: "/workout", label: "Workout", icon: WorkoutIcon },
   { href: "/timer", label: "Timer", icon: TimerIcon },

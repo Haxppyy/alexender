@@ -17,6 +17,7 @@ import { Logo } from "./Logo";
 import { Onboarding } from "./Onboarding";
 import { Toaster } from "./ui";
 import { Dialogs } from "./dialog";
+import { AchievementWatcher } from "./Ceremony";
 import { GoalReminders } from "./GoalReminders";
 import { PlannedButton, PlannedToday } from "./PlannedToday";
 import { TimerWatcher } from "./TimerWatcher";
@@ -198,6 +199,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <TimerWatcher />
         <GoalReminders />
         <PlannedToday />
+        <AchievementWatcher />
       </div>
     </LucideProvider>
   );

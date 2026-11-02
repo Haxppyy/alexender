@@ -1,12 +1,12 @@
 "use client";
 
-import { Flag, Plus } from "lucide-react";
+import { Check, Flag, Plus } from "lucide-react";
 import { useState } from "react";
 import { ObjectiveCard, ObjectiveForm, ObjectiveView } from "@/components/Objective";
 import { SectionProgress } from "@/components/SectionProgress";
 import { stepProgress } from "@/components/StepPlanner";
 import { SortableList } from "@/components/Sortable";
-import { Modal } from "@/components/ui";
+import { Button, Modal } from "@/components/ui";
 import { byOrder, MAX_MISSIONS, useStore } from "@/lib/store";
 import type { Mission } from "@/lib/types";
 
@@ -54,7 +54,7 @@ export default function MissionPage() {
         {(m, handle) => (
           <div className="group relative">
             <div className="absolute top-1/2 -left-9 hidden -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100 lg:block">{handle}</div>
-            <ObjectiveCard item={toFields(m)} fallbackIcon={flag} onOpen={() => setOpen(m.id)} />
+            <ObjectiveCard item={toFields(m)} fallbackIcon={flag} meta={m.accomplished ? <span className="text-success">Accomplished</span> : undefined} onOpen={() => setOpen(m.id)} muted={m.accomplished} />
           </div>
         )}
       </SortableList>
@@ -82,6 +82,15 @@ export default function MissionPage() {
           onPatch={(patch) => updateMission(current.id, fromPatch(patch))}
           onDelete={() => deleteMission(current.id)}
           onClose={() => setOpen(null)}
+          details={
+            <Button
+              size="sm"
+              variant={current.accomplished ? "outline" : "primary"}
+              onClick={() => updateMission(current.id, current.accomplished ? { accomplished: false, accomplishedAt: undefined } : { accomplished: true, accomplishedAt: Date.now() })}
+            >
+              <Check className="size-3.5" /> {current.accomplished ? "Accomplished" : "Mark accomplished"}
+            </Button>
+          }
         />
       )}
     </div>
