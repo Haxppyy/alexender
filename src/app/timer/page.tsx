@@ -62,10 +62,9 @@ export default function TimerPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <header className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-[28px] leading-tight font-semibold tracking-tight">Timer</h1>
+      <div className="mb-6 flex justify-end">
         <NotifyToggle />
-      </header>
+      </div>
 
       {running ? <Running session={running} now={now} /> : <StartForm />}
 

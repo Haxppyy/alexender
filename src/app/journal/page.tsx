@@ -42,6 +42,12 @@ export default function JournalPage() {
   const [open, setOpen] = useState<string | null>(null);
   const [filter, setFilter] = useState<JournalCategory | null>(null);
 
+  // An entry opened and left empty (the app closed while writing) is never kept.
+  useEffect(() => {
+    const { journal, deleteJournal } = useStore.getState();
+    for (const [key, e] of Object.entries(journal)) if (!e.text.trim()) deleteJournal(key);
+  }, []);
+
   // Newest day first; within a day, in the order written.
   const entries = useMemo<Item[]>(
     () =>

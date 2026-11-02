@@ -74,9 +74,6 @@ export default function LearningPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <header className="mb-6">
-        <h1 className="text-[26px] leading-tight font-semibold tracking-tight">Learning</h1>
-      </header>
 
       <form
         onSubmit={(e) => {

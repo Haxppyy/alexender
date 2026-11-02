@@ -15,18 +15,12 @@ import {
   TrendChart,
   type HeatCell,
 } from "@/components/charts";
-import { DayRater, VERDICT_COLOR } from "@/components/DayRater";
 import { Segmented } from "@/components/ui";
 import { addDays, formatShort, fromKey, toKey, WEEKDAYS } from "@/lib/date";
 import { currentStreak, dayResult, lastNDays, rangeSummary } from "@/lib/stats";
 import { useClock, useStore } from "@/lib/store";
-import type { DayRating } from "@/lib/types";
 import { cn, formatMinutes } from "@/lib/utils";
 import { minutesByDay } from "@/lib/timer";
-
-/** A rated day's colour: green used, red wasted — brighter the more stars you gave it. */
-const verdictFill = (r: DayRating, base = 22) => `color-mix(in oklab, ${VERDICT_COLOR[r.verdict!]} ${base + (r.stars ?? 2) * 8}%, transparent)`;
-const starsText = (r?: DayRating) => (r?.stars ? ` · ${"★".repeat(r.stars)}` : "");
 
 /** Day colour: crystal for a won day, grey otherwise — stronger the more you finished. */
 const dayFill = (pct: number, win: boolean) =>
@@ -76,8 +70,6 @@ export default function CalendarPage() {
   const sessions = useStore((s) => s.timerSessions);
   const now = useClock((s) => s.now);
   const threshold = useStore((s) => s.settings.winThreshold);
-  const ratingList = useStore((s) => s.dayRatings);
-  const ratings = useMemo(() => new Map(ratingList.filter((r) => r.verdict || r.stars).map((r) => [r.date, r])), [ratingList]);
   const [month, setMonth] = useState(() => today.slice(0, 7));
   const [selected, setSelected] = useState(today);
   const [range, setRange] = useState<Range>("30");
@@ -221,13 +213,11 @@ export default function CalendarPage() {
         const log = days[date];
         const future = date > today;
         const has = !!log && log.total > 0;
-        const rated = ratings.get(date);
         week.push({
           key: date,
           value: future ? undefined : has ? log.pct : null,
           win: dayResult(log, date, today, threshold) === "win",
-          ...(rated?.verdict && { color: VERDICT_COLOR[rated.verdict], strength: 40 + (rated.stars ?? 2) * 12 }),
-          tip: `${longDate(date)} · ${has ? `${log.pct}% (${log.done}/${log.total})` : "nothing planned"}${rated?.verdict ? ` · ${rated.verdict}` : ""}${starsText(rated)}`,
+          tip: `${longDate(date)} · ${has ? `${log.pct}% (${log.done}/${log.total})` : "nothing planned"}`,
         });
       }
       const m = fromKey(week[0].key).getMonth();
@@ -242,7 +232,7 @@ export default function CalendarPage() {
       weeks.push(week);
     }
     return { weeks, labels };
-  }, [days, today, threshold, ratings]);
+  }, [days, today, threshold]);
 
   const [y, mo] = month.split("-").map(Number);
   const first = toKey(new Date(y, mo - 1, 1));
@@ -290,8 +280,6 @@ export default function CalendarPage() {
           label={`focus · ${stats.finished} done`}
         />
       </div>
-
-      <UsedWasted dates={stats.dates} ratings={ratings} today={today} onPick={pickDay} />
 
       <Panel title="Completion">
         <TrendChart
@@ -355,23 +343,16 @@ export default function CalendarPage() {
               const has = !!log && log.total > 0 && date <= today;
               const planned = !!log && log.total > 0 && date > today;
               const r = dayResult(log, date, today, threshold);
-              const rated = date <= today ? ratings.get(date) : undefined;
               return (
                 <button
                   key={date}
                   onClick={() => setSelected(date)}
-                  aria-label={`${longDate(date)}${has ? `, ${log.pct}%` : ""}${rated?.verdict ? `, ${rated.verdict}` : ""}`}
+                  aria-label={`${longDate(date)}${has ? `, ${log.pct}%` : ""}`}
                   aria-pressed={date === selected}
-                  style={
-                    rated?.verdict
-                      ? { background: verdictFill(rated) }
-                      : has
-                        ? { background: dayFill(log.pct, r === "win") }
-                        : undefined
-                  }
+                  style={has ? { background: dayFill(log.pct, r === "win") } : undefined}
                   className={cn(
                     "flex aspect-square flex-col items-center justify-center gap-0.5 rounded-xl transition-[box-shadow,background-color,transform] duration-200 active:scale-95",
-                    !has && !rated?.verdict && "hover:bg-surface",
+                    !has && "hover:bg-surface",
                     date === selected && "ring-1 ring-fg/70",
                     fromKey(date).getMonth() !== mo - 1 && "opacity-25",
                   )}
@@ -389,7 +370,7 @@ export default function CalendarPage() {
                   <span
                     className={cn(
                       "flex h-3 items-center font-mono text-[10px] leading-3 tabular-nums",
-                      rated?.verdict ? "text-fg" : r === "win" ? "text-crystal" : "text-muted",
+                      r === "win" ? "text-crystal" : "text-muted",
                     )}
                   >
                     {has ? (
@@ -459,11 +440,6 @@ export default function CalendarPage() {
             )}
           </div>
         </div>
-        {selected <= today && (
-          <div key={`rate-${selected}`} className="animate-fade mx-auto mt-4 max-w-md">
-            <DayRater date={selected} title={selected === today ? "How did you use today?" : "How did you use this day?"} />
-          </div>
-        )}
         <DayTasks date={selected} today={today} />
       </div>
 
@@ -483,7 +459,7 @@ export default function CalendarPage() {
         )}
       </div>
 
-      <Panel title="Six months" note="Green used · red wasted · blue won">
+      <Panel title="Six months" note="Blue days were won">
         <Heatmap
           weeks={heat.weeks}
           monthLabels={heat.labels}
@@ -491,49 +467,6 @@ export default function CalendarPage() {
         />
       </Panel>
     </div>
-  );
-}
-
-/**
- * Every day of the range as a dot: green for a day you used, red for one you wasted, brighter the
- * more stars you gave it. Blank days are days you never judged.
- */
-function UsedWasted({ dates, ratings, today, onPick }: { dates: string[]; ratings: Map<string, DayRating>; today: string; onPick: (date: string) => void }) {
-  const past = dates.filter((d) => d <= today);
-  const used = past.filter((d) => ratings.get(d)?.verdict === "used").length;
-  const wasted = past.filter((d) => ratings.get(d)?.verdict === "wasted").length;
-  const judged = used + wasted;
-  return (
-    <Panel title="Used or wasted" note={`${past.length - judged} not judged`}>
-      <div className="mb-5 grid grid-cols-2 gap-2">
-        <div className="rounded-2xl px-4 py-3.5" style={{ background: `color-mix(in oklab, ${VERDICT_COLOR.used} 12%, transparent)` }}>
-          <p className="text-[28px] leading-none font-semibold tabular-nums" style={{ color: VERDICT_COLOR.used }}>{used}</p>
-          <p className="mt-1.5 text-[13px] text-muted">days used{judged ? ` · ${Math.round((used / judged) * 100)}%` : ""}</p>
-        </div>
-        <div className="rounded-2xl px-4 py-3.5" style={{ background: `color-mix(in oklab, ${VERDICT_COLOR.wasted} 12%, transparent)` }}>
-          <p className="text-[28px] leading-none font-semibold tabular-nums" style={{ color: VERDICT_COLOR.wasted }}>{wasted}</p>
-          <p className="mt-1.5 text-[13px] text-muted">days wasted{wasted ? " — never coming back" : ""}</p>
-        </div>
-      </div>
-      <div className={cn("grid gap-1.5", dates.length <= 7 ? "grid-cols-7" : dates.length <= 30 ? "grid-cols-10" : "grid-cols-15")}>
-        {dates.map((d) => {
-          const r = ratings.get(d);
-          const future = d > today;
-          return (
-            <button
-              key={d}
-              type="button"
-              disabled={future}
-              onClick={() => onPick(d)}
-              title={`${longDate(d)}${r?.verdict ? ` · ${r.verdict}` : future ? "" : " · not judged"}${starsText(r)}`}
-              aria-label={`${longDate(d)}${r?.verdict ? `, ${r.verdict}` : ", not judged"}`}
-              className={cn("aspect-square rounded-full transition-transform hover:scale-110 active:scale-95", !r?.verdict && "border border-line-strong", d === today && "ring-1 ring-fg/60 ring-offset-2 ring-offset-bg", future && "opacity-20")}
-              style={r?.verdict ? { background: VERDICT_COLOR[r.verdict], opacity: 0.45 + (r.stars ?? 3) * 0.11 } : undefined}
-            />
-          );
-        })}
-      </div>
-    </Panel>
   );
 }
 

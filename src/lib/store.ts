@@ -5,7 +5,7 @@ import { create } from "zustand";
 import { persist, type PersistStorage, type StorageValue } from "zustand/middleware";
 import { todayKey } from "./date";
 import { deleteImages, deleteImagesLater, keepImages } from "./images";
-import type { Book, BucketItem, Clip, DayLog, DayRating, Deposit, Exercise, Goal, Habit, HabitCheck, Idea, Playlist, Question, Learning, Skill, WorkoutLog, WorkoutUnit, JournalCategory, JournalEntry, ListItem, Mission, MyStory, Plan, Priority, SavingsGoal, Settings, StoryRead, Task, TimerSession, TimerTask, Video } from "./types";
+import type { Book, BucketItem, Clip, DayLog, Deposit, Exercise, Goal, Habit, HabitCheck, Idea, Playlist, Question, Learning, Skill, WorkoutLog, WorkoutUnit, JournalCategory, JournalEntry, ListItem, Mission, MyStory, Plan, Priority, SavingsGoal, Settings, StoryRead, Task, TimerSession, TimerTask, Video } from "./types";
 import { pct, uid } from "./utils";
 
 /*
@@ -47,7 +47,7 @@ const idbStorage: PersistStorage<Data> = {
 };
 
 /** Collections whose records sync individually. Tombstone keys are `${kind}:${id}`. */
-export type Kind = "tasks" | "missions" | "goals" | "videos" | "books" | "bucket" | "donts" | "podcasts" | "plans" | "ideas" | "habits" | "habitChecks" | "timerTasks" | "timerSessions" | "exercises" | "workoutLogs" | "skills" | "learnings" | "questions" | "playlists" | "myStories" | "storiesRead" | "journal" | "dayRatings" | "savings" | "deposits" | "clips";
+export type Kind = "tasks" | "missions" | "goals" | "videos" | "books" | "bucket" | "donts" | "podcasts" | "plans" | "ideas" | "habits" | "habitChecks" | "timerTasks" | "timerSessions" | "exercises" | "workoutLogs" | "skills" | "learnings" | "questions" | "playlists" | "myStories" | "storiesRead" | "journal" | "savings" | "deposits" | "clips";
 
 /** Collections that can be reordered by dragging. */
 export type OrderedKind = "tasks" | "missions" | "goals" | "videos" | "books" | "bucket" | "donts" | "podcasts" | "plans" | "ideas" | "habits" | "timerTasks" | "exercises" | "skills" | "learnings" | "questions" | "playlists" | "savings" | "clips";
@@ -81,7 +81,6 @@ export interface Data {
   storiesRead: StoryRead[];
   /** Keyed by entry id (by date for entries written before a day could hold several). */
   journal: Record<string, JournalEntry>;
-  dayRatings: DayRating[];
   savings: SavingsGoal[];
   deposits: Deposit[];
   clips: Clip[];
@@ -90,7 +89,7 @@ export interface Data {
   deleted: Record<string, number>;
 }
 
-export const DATA_KEYS = ["tasks", "days", "missions", "goals", "videos", "books", "bucket", "donts", "podcasts", "plans", "ideas", "habits", "habitChecks", "timerTasks", "timerSessions", "exercises", "workoutLogs", "skills", "learnings", "questions", "playlists", "myStories", "storiesRead", "journal", "dayRatings", "savings", "deposits", "clips", "settings", "deleted"] as const;
+export const DATA_KEYS = ["tasks", "days", "missions", "goals", "videos", "books", "bucket", "donts", "podcasts", "plans", "ideas", "habits", "habitChecks", "timerTasks", "timerSessions", "exercises", "workoutLogs", "skills", "learnings", "questions", "playlists", "myStories", "storiesRead", "journal", "savings", "deposits", "clips", "settings", "deleted"] as const;
 
 const defaultSettings: Settings = {
   name: "",
@@ -124,7 +123,6 @@ const initialData: Data = {
   myStories: [],
   storiesRead: [],
   journal: {},
-  dayRatings: [],
   savings: [],
   deposits: [],
   clips: [],
@@ -240,9 +238,6 @@ interface Actions {
   updateJournal: (key: string, patch: { text?: string; category?: JournalCategory }) => void;
   deleteJournal: (key: string) => void;
 
-  /** Used or wasted, and 1–5 overall. Passing the same value again takes it back. */
-  rateDay: (date: string, patch: { verdict?: "used" | "wasted"; stars?: number }) => void;
-
   addSavingsGoal: (g: { title: string; target: number; deadline?: string }) => string;
   updateSavingsGoal: (id: string, patch: Partial<SavingsGoal>) => void;
   deleteSavingsGoal: (id: string) => void;
@@ -308,7 +303,6 @@ export function normalize(p: Partial<Data>): Data {
     myStories: p.myStories ?? [],
     storiesRead: p.storiesRead ?? [],
     journal: p.journal ?? {},
-    dayRatings: p.dayRatings ?? [],
     savings: p.savings ?? [],
     deposits: p.deposits ?? [],
     clips: p.clips ?? [],
@@ -703,16 +697,6 @@ export const useStore = create<Store>()(
           return { journal, deleted: tombstone(s.deleted, "journal", key) };
         }),
 
-      rateDay: (date, patch) =>
-        setState((s) => {
-          const now = Date.now();
-          const old = s.dayRatings.find((r) => r.date === date);
-          const next: DayRating = { ...(old ?? { id: date, date, createdAt: now }), updatedAt: now };
-          if (patch.verdict) next.verdict = old?.verdict === patch.verdict ? undefined : patch.verdict;
-          if (patch.stars) next.stars = old?.stars === patch.stars ? undefined : patch.stars;
-          return { dayRatings: [...s.dayRatings.filter((r) => r.date !== date), next] };
-        }),
-
       addSavingsGoal: ({ title, target, deadline }) => {
         const id = uid();
         const now = Date.now();
@@ -764,8 +748,8 @@ export const useStore = create<Store>()(
 
 /** The persisted/synced part of the store. */
 export function pickData(s: Data): Data {
-  const { tasks, days, missions, goals, videos, books, bucket, donts, podcasts, plans, ideas, habits, habitChecks, timerTasks, timerSessions, exercises, workoutLogs, skills, learnings, questions, playlists, myStories, storiesRead, journal, dayRatings, savings, deposits, clips, settings, deleted } = s;
-  return { tasks, days, missions, goals, videos, books, bucket, donts, podcasts, plans, ideas, habits, habitChecks, timerTasks, timerSessions, exercises, workoutLogs, skills, learnings, questions, playlists, myStories, storiesRead, journal, dayRatings, savings, deposits, clips, settings, deleted };
+  const { tasks, days, missions, goals, videos, books, bucket, donts, podcasts, plans, ideas, habits, habitChecks, timerTasks, timerSessions, exercises, workoutLogs, skills, learnings, questions, playlists, myStories, storiesRead, journal, savings, deposits, clips, settings, deleted } = s;
+  return { tasks, days, missions, goals, videos, books, bucket, donts, podcasts, plans, ideas, habits, habitChecks, timerTasks, timerSessions, exercises, workoutLogs, skills, learnings, questions, playlists, myStories, storiesRead, journal, savings, deposits, clips, settings, deleted };
 }
 
 /** Every image id referenced anywhere — used for backups and photo sync. */

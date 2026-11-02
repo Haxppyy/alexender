@@ -341,16 +341,6 @@ export interface JournalEntry {
   updatedAt: number;
 }
 
-/** How a day was spent, in your own judgement: used or wasted, and 1–5 overall. The id is the date. */
-export interface DayRating {
-  id: string;
-  date: string;
-  verdict?: "used" | "wasted";
-  stars?: number;
-  createdAt: number;
-  updatedAt?: number;
-}
-
 /** Something you're saving money for. */
 export interface SavingsGoal {
   id: string;

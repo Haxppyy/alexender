@@ -527,7 +527,7 @@ export function toast(message: string, action?: ToastItem["action"]) {
 export function Toaster() {
   const items = useToasts((s) => s.items);
   return (
-    <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[calc(8.5rem+env(safe-area-inset-bottom))] z-[60] flex flex-col items-center gap-2 px-4 lg:bottom-8">
+    <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[calc(9.5rem+env(safe-area-inset-bottom))] z-[60] flex flex-col items-center gap-2 px-4 lg:bottom-8">
       {items.map((t) => (
         <div
           key={t.id}
