@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { confirmDialog } from "@/components/dialog";
 import { SectionProgress } from "@/components/SectionProgress";
 import { SortableList } from "@/components/Sortable";
-import { EmptyState, IconButton } from "@/components/ui";
+import { AddBar, EmptyState, IconButton } from "@/components/ui";
 import { addDays, fromKey, toKey } from "@/lib/date";
 import { tap } from "@/lib/motion";
 import { byOrder, useClock, useStore } from "@/lib/store";
@@ -71,24 +71,17 @@ export default function HabitsPage() {
   return (
     <div className="mx-auto max-w-2xl">
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const title = text.trim();
-          if (!title) return;
-          addHabit(title);
+      <AddBar
+        value={text}
+        onChange={setText}
+        onSubmit={() => {
+          addHabit(text.trim());
           setText("");
         }}
+        placeholder="Add a habit"
+        label="Add habit"
         className="mb-8"
-      >
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Add a habit…"
-          aria-label="New habit"
-          className="h-12 w-full border-b border-line bg-transparent text-[16px] outline-none placeholder:text-faint focus:border-line-strong"
-        />
-      </form>
+      />
 
       {list.length > 0 && (
         <SectionProgress

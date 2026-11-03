@@ -47,7 +47,7 @@ const idbStorage: PersistStorage<Data> = {
 };
 
 /** Collections whose records sync individually. Tombstone keys are `${kind}:${id}`. */
-export type Kind = "tasks" | "missions" | "goals" | "videos" | "books" | "bucket" | "donts" | "podcasts" | "plans" | "ideas" | "habits" | "habitChecks" | "timerTasks" | "timerSessions" | "exercises" | "workoutLogs" | "skills" | "learnings" | "questions" | "playlists" | "myStories" | "storiesRead" | "journal" | "dayMarks" | "achievements" | "savings" | "deposits" | "clips";
+export type Kind = "tasks" | "missions" | "goals" | "videos" | "books" | "bucket" | "donts" | "podcasts" | "plans" | "ideas" | "habits" | "habitChecks" | "timerTasks" | "timerSessions" | "exercises" | "workoutLogs" | "skills" | "learnings" | "questions" | "playlists" | "myStories" | "storiesRead" | "hiddenStories" | "journal" | "dayMarks" | "achievements" | "savings" | "deposits" | "clips";
 
 /** Collections that can be reordered by dragging. */
 export type OrderedKind = "tasks" | "missions" | "goals" | "videos" | "books" | "bucket" | "donts" | "podcasts" | "plans" | "ideas" | "habits" | "timerTasks" | "exercises" | "skills" | "learnings" | "questions" | "playlists" | "savings" | "clips";
@@ -79,6 +79,8 @@ export interface Data {
   playlists: Playlist[];
   myStories: MyStory[];
   storiesRead: StoryRead[];
+  /** Built-in stories you removed from your list. */
+  hiddenStories: StoryRead[];
   /** Keyed by entry id (by date for entries written before a day could hold several). */
   journal: Record<string, JournalEntry>;
   dayMarks: DayMark[];
@@ -91,7 +93,7 @@ export interface Data {
   deleted: Record<string, number>;
 }
 
-export const DATA_KEYS = ["tasks", "days", "missions", "goals", "videos", "books", "bucket", "donts", "podcasts", "plans", "ideas", "habits", "habitChecks", "timerTasks", "timerSessions", "exercises", "workoutLogs", "skills", "learnings", "questions", "playlists", "myStories", "storiesRead", "journal", "dayMarks", "achievements", "savings", "deposits", "clips", "settings", "deleted"] as const;
+export const DATA_KEYS = ["tasks", "days", "missions", "goals", "videos", "books", "bucket", "donts", "podcasts", "plans", "ideas", "habits", "habitChecks", "timerTasks", "timerSessions", "exercises", "workoutLogs", "skills", "learnings", "questions", "playlists", "myStories", "storiesRead", "hiddenStories", "journal", "dayMarks", "achievements", "savings", "deposits", "clips", "settings", "deleted"] as const;
 
 const defaultSettings: Settings = {
   name: "",
@@ -124,6 +126,7 @@ const initialData: Data = {
   playlists: [],
   myStories: [],
   storiesRead: [],
+  hiddenStories: [],
   journal: {},
   dayMarks: [],
   achievements: [],
@@ -190,6 +193,9 @@ interface Actions {
 
   /** Remember that a story has been read. */
   markStoryRead: (id: string) => void;
+  /** Take a built-in story off your list (or put it back). */
+  hideStory: (id: string) => void;
+  unhideStory: (id: string) => void;
 
   addHabit: (title: string) => void;
   updateHabit: (id: string, patch: Partial<Habit>) => void;
@@ -314,6 +320,7 @@ export function normalize(p: Partial<Data>): Data {
     playlists: p.playlists ?? [],
     myStories: p.myStories ?? [],
     storiesRead: p.storiesRead ?? [],
+    hiddenStories: p.hiddenStories ?? [],
     journal: p.journal ?? {},
     dayMarks: p.dayMarks ?? [],
     achievements: p.achievements ?? [],
@@ -660,6 +667,16 @@ export const useStore = create<Store>()(
       markStoryRead: (id) =>
         setState((s) => (s.storiesRead.some((r) => r.id === id) ? s : { storiesRead: [...s.storiesRead, { id, createdAt: Date.now() }] })),
 
+      hideStory: (id) =>
+        setState((s) => {
+          if (s.hiddenStories.some((h) => h.id === id)) return s;
+          const now = Date.now();
+          const deleted = { ...s.deleted };
+          delete deleted[`hiddenStories:${id}`];
+          return { hiddenStories: [...s.hiddenStories, { id, createdAt: now, updatedAt: now }], deleted };
+        }),
+      unhideStory: (id) => setState((s) => ({ hiddenStories: s.hiddenStories.filter((h) => h.id !== id), deleted: tombstone(s.deleted, "hiddenStories", id) })),
+
       deleteMyStory: (id) => {
         const story = getState().myStories.find((x) => x.id === id);
         if (story?.imageId) deleteImages([story.imageId]);
@@ -786,8 +803,8 @@ export const useStore = create<Store>()(
 
 /** The persisted/synced part of the store. */
 export function pickData(s: Data): Data {
-  const { tasks, days, missions, goals, videos, books, bucket, donts, podcasts, plans, ideas, habits, habitChecks, timerTasks, timerSessions, exercises, workoutLogs, skills, learnings, questions, playlists, myStories, storiesRead, journal, dayMarks, achievements, savings, deposits, clips, settings, deleted } = s;
-  return { tasks, days, missions, goals, videos, books, bucket, donts, podcasts, plans, ideas, habits, habitChecks, timerTasks, timerSessions, exercises, workoutLogs, skills, learnings, questions, playlists, myStories, storiesRead, journal, dayMarks, achievements, savings, deposits, clips, settings, deleted };
+  const { tasks, days, missions, goals, videos, books, bucket, donts, podcasts, plans, ideas, habits, habitChecks, timerTasks, timerSessions, exercises, workoutLogs, skills, learnings, questions, playlists, myStories, storiesRead, hiddenStories, journal, dayMarks, achievements, savings, deposits, clips, settings, deleted } = s;
+  return { tasks, days, missions, goals, videos, books, bucket, donts, podcasts, plans, ideas, habits, habitChecks, timerTasks, timerSessions, exercises, workoutLogs, skills, learnings, questions, playlists, myStories, storiesRead, hiddenStories, journal, dayMarks, achievements, savings, deposits, clips, settings, deleted };
 }
 
 /** Every image id referenced anywhere — used for backups and photo sync. */

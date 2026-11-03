@@ -452,56 +452,79 @@ export interface AddAction {
   keepOpen?: boolean;
 }
 
-/** The top of a section: small add buttons, and an input only while adding. The section's name is in the navigation. */
-export function SectionTop({ actions = [], children }: { actions?: AddAction[]; children?: ReactNode }) {
-  const [open, setOpen] = useState<number | null>(null);
-  const [text, setText] = useState("");
-  const action = open !== null ? actions[open] : null;
-
+/**
+ * The one box for adding things, the same in every section: type, press Enter or +. It stays
+ * focused, so several go in one after another. Anything extra (a topic, a source) sits beneath.
+ */
+export function AddBar({
+  value,
+  onChange,
+  onSubmit,
+  placeholder,
+  label,
+  footer,
+  className,
+  autoFocus,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+  placeholder: string;
+  label: string;
+  footer?: ReactNode;
+  className?: string;
+  autoFocus?: boolean;
+}) {
   return (
-    <div className="mb-10 flex flex-col items-center gap-4 text-center sm:mb-12">
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        {children}
-        {actions.map((a, i) => (
-          <PillButton
-            key={a.label}
-            active={open === i}
-            onClick={() => {
-              setOpen(open === i ? null : i);
-              setText("");
-            }}
-          >
-            {a.label}
-          </PillButton>
-        ))}
-      </div>
-      {action && (
-        <form
-          className="animate-sheet w-full max-w-md"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const value = text.trim();
-            if (!value) return;
-            action.onAdd(value);
-            setText("");
-            if (!action.keepOpen) setOpen(null);
-          }}
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (value.trim()) onSubmit();
+      }}
+      className={cn("rounded-2xl border border-line bg-surface p-1.5 transition-colors focus-within:border-line-strong", className)}
+    >
+      <div className="flex items-center gap-2 pl-2.5">
+        <input
+          autoFocus={autoFocus}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          aria-label={label}
+          enterKeyHint="done"
+          className="h-11 min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:text-faint"
+        />
+        <button
+          type="submit"
+          aria-label={label}
+          disabled={!value.trim()}
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-fg text-bg transition-[transform,opacity] active:scale-90 disabled:opacity-25"
         >
-          <Input
-            autoFocus
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key !== "Escape") return;
-              e.preventDefault();
-              setOpen(null);
-            }}
-            aria-label={action.label}
-            placeholder={action.placeholder}
-            enterKeyHint="done"
-            className="h-14 text-center text-[17px]"
-          />
-        </form>
+          <Plus className="size-5" strokeWidth={2.4} />
+        </button>
+      </div>
+      {footer && <div className="mt-1 border-t border-line px-2.5 pt-1.5 pb-0.5">{footer}</div>}
+    </form>
+  );
+}
+
+/** The top of a section: anything it needs (a switch, a button), and the box for adding. */
+export function SectionTop({ actions = [], children }: { actions?: AddAction[]; children?: ReactNode }) {
+  const [text, setText] = useState("");
+  const action = actions[0];
+  return (
+    <div className="mb-8 space-y-4">
+      {children && <div className="flex flex-wrap items-center justify-center gap-2">{children}</div>}
+      {action && (
+        <AddBar
+          value={text}
+          onChange={setText}
+          onSubmit={() => {
+            action.onAdd(text.trim());
+            setText("");
+          }}
+          placeholder={action.placeholder}
+          label={action.label}
+        />
       )}
     </div>
   );

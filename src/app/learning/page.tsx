@@ -3,7 +3,7 @@
 import { GraduationCap, Search, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SectionProgress } from "@/components/SectionProgress";
-import { Button, EmptyState, Modal, toast } from "@/components/ui";
+import { AddBar, Button, EmptyState, Modal, toast } from "@/components/ui";
 import { addDays, daysBetween, fromKey } from "@/lib/date";
 import { tap } from "@/lib/motion";
 import { useClock, useStore } from "@/lib/store";
@@ -75,62 +75,43 @@ export default function LearningPage() {
   return (
     <div className="mx-auto max-w-xl">
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          save();
-        }}
-        className="mb-8 rounded-2xl border border-line bg-surface px-4 pt-3 pb-2 transition-colors focus-within:border-line-strong"
-      >
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              save();
-            }
-          }}
-          placeholder="What did you learn?"
-          aria-label="What did you learn?"
-          rows={2}
-          className="block w-full resize-none bg-transparent text-[18px] leading-relaxed outline-none placeholder:text-faint [field-sizing:content]"
-        />
-        <div className="mt-1 flex flex-wrap items-center gap-2 border-t border-line pt-2">
-          <input
-            value={source}
-            onChange={(e) => setSource(e.target.value)}
-            placeholder="From — a book, a person, a video…"
-            aria-label="Where it came from"
-            className="h-8 min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-faint"
-          />
-          <button
-            type="submit"
-            disabled={!text.trim()}
-            className="h-10 shrink-0 rounded-full bg-fg px-5 text-[14px] font-semibold text-bg transition-[transform,opacity] active:scale-95 disabled:opacity-30"
-          >
-            Save
-          </button>
-        </div>
-        {skills.length > 0 && (
-          <div className="no-scrollbar -mx-1 mt-1 flex gap-1 overflow-x-auto px-1 pb-1">
-            {skills.map((k) => (
-              <button
-                key={k.id}
-                type="button"
-                aria-pressed={skillId === k.id}
-                onClick={() => setSkillId(skillId === k.id ? undefined : k.id)}
-                className={cn(
-                  "h-7 shrink-0 rounded-full border px-2.5 text-[12px] transition-colors",
-                  skillId === k.id ? "border-crystal/60 text-crystal" : "border-line text-faint hover:text-fg",
-                )}
-              >
-                {k.title}
-              </button>
-            ))}
+      <AddBar
+        value={text}
+        onChange={setText}
+        onSubmit={save}
+        placeholder="What did you learn today?"
+        label="Save learning"
+        className="mb-8"
+        footer={
+          <div className="flex flex-col gap-1">
+            <input
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              placeholder="From — a book, a person, a video"
+              aria-label="Where it came from"
+              className="h-9 w-full bg-transparent text-[14px] outline-none placeholder:text-faint"
+            />
+            {skills.length > 0 && (
+              <div className="no-scrollbar -mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
+                {skills.map((k) => (
+                  <button
+                    key={k.id}
+                    type="button"
+                    aria-pressed={skillId === k.id}
+                    onClick={() => setSkillId(skillId === k.id ? undefined : k.id)}
+                    className={cn(
+                      "h-8 shrink-0 rounded-full border px-3 text-[13px] transition-colors",
+                      skillId === k.id ? "border-crystal/60 text-crystal" : "border-line text-faint hover:text-fg",
+                    )}
+                  >
+                    {k.title}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </form>
+        }
+      />
 
       {learnings.length > 0 && (
         <SectionProgress

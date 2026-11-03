@@ -81,7 +81,6 @@ export default function JournalPage() {
   return (
     <div className="mx-auto max-w-xl">
       <section className="mb-8">
-        <p className="mb-3 text-center text-[14px] text-muted">Write about…</p>
         <div className="grid grid-cols-4 gap-2">
           {CATEGORIES.map((c) => (
             <button

@@ -837,6 +837,10 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     translate: 0 0;
   }
 }
+/* The treasure, once taken, glows softly. */
+.map-glow {
+  animation: map-next 3.2s ease-in-out infinite;
+}
 .map-next {
   transform-origin: center;
   transform-box: fill-box;

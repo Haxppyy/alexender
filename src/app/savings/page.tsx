@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Minus, PiggyBank, Trash2, X } from "lucide-react";
+import { ChevronDown, Minus, Pencil, PiggyBank, Sparkles, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { confirmDialog, promptDialog } from "@/components/dialog";
 import { SortableList } from "@/components/Sortable";
@@ -13,6 +13,24 @@ import { cn } from "@/lib/utils";
 
 const money = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 const QUICK = [100, 500, 1000, 5000];
+const short = (n: number) => (n >= 1000 ? `${Math.round((n / 1000) * 10) / 10}k` : String(n));
+
+/**
+ * The four one-tap amounts: yours if you set them; otherwise learned from what you actually put
+ * in — the amounts you use most — filled out with the usual ones until it has a history.
+ */
+function quickAmounts(goal: SavingsGoal, deposits: Deposit[]) {
+  if (goal.quick?.length) return goal.quick;
+  const uses = new Map<number, { n: number; last: number }>();
+  for (const d of deposits) {
+    if (d.amount <= 0) continue;
+    const u = uses.get(d.amount) ?? { n: 0, last: 0 };
+    uses.set(d.amount, { n: u.n + 1, last: Math.max(u.last, d.createdAt) });
+  }
+  const learned = [...uses.entries()].sort((a, b) => b[1].n - a[1].n || b[1].last - a[1].last).map(([amount]) => amount).slice(0, 4);
+  for (const q of QUICK) if (learned.length < 4 && !learned.includes(q)) learned.push(q);
+  return learned.sort((a, b) => a - b);
+}
 
 /** "Laptop 60000" → a goal called Laptop with a target of ₹60,000. */
 function parseGoal(text: string) {
@@ -88,6 +106,19 @@ function GoalCard({ goal, saved, handle, today }: { goal: SavingsGoal; saved: nu
   const left = Math.max(0, goal.target - saved);
   const daysLeft = goal.deadline ? daysBetween(today, goal.deadline) : null;
   const history = deposits.filter((d) => d.goalId === goal.id).sort((a, b) => b.createdAt - a.createdAt);
+  const amounts = quickAmounts(goal, history);
+
+  const setAmounts = async () => {
+    const raw = await promptDialog("Your one-tap amounts", {
+      detail: "Up to four, separated by commas. Leave it empty and they'll learn from what you save.",
+      defaultValue: goal.quick?.join(", ") ?? "",
+      inputMode: "text",
+    });
+    if (raw === null) return;
+    const list = [...new Set(raw.split(/[,\s]+/).map((x) => Math.round(Number(x.replace(/[^\d.]/g, "")))).filter((n) => n > 0))].slice(0, 4).sort((a, b) => a - b);
+    updateSavingsGoal(goal.id, { quick: list.length ? list : undefined });
+    toast(list.length ? "Your amounts are set" : "They'll learn from what you save");
+  };
 
   const put = (amount: number, note?: string) => {
     tap(10);
@@ -131,19 +162,30 @@ function GoalCard({ goal, saved, handle, today }: { goal: SavingsGoal; saved: nu
               : `${money(left)} to go`}
       </p>
 
-      {/* Money in, in one tap. */}
-      <div className="mt-4 grid grid-cols-4 gap-2">
-        {QUICK.map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => put(n)}
-            className="h-12 rounded-2xl text-[15px] font-semibold tabular-nums transition-transform active:scale-95"
-            style={{ color: "var(--hue-sage)", background: "color-mix(in oklab, var(--hue-sage) 12%, transparent)" }}
-          >
-            +{n >= 1000 ? `${n / 1000}k` : n}
-          </button>
-        ))}
+      {/* Money in, in one tap — your amounts, or the ones you use most. */}
+      <div className="mt-4 flex gap-2">
+        <div className="grid flex-1 gap-2" style={{ gridTemplateColumns: `repeat(${amounts.length}, minmax(0, 1fr))` }}>
+          {amounts.map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => put(n)}
+              className="h-12 rounded-2xl text-[15px] font-semibold tabular-nums transition-transform active:scale-95"
+              style={{ color: "var(--hue-sage)", background: "color-mix(in oklab, var(--hue-sage) 12%, transparent)" }}
+            >
+              +{short(n)}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={setAmounts}
+          aria-label="Set your one-tap amounts"
+          title={goal.quick ? "Your amounts — tap to change" : "Learned from your savings — tap to set your own"}
+          className="flex h-12 w-10 shrink-0 items-center justify-center rounded-2xl text-faint transition-colors hover:bg-surface-2 hover:text-fg"
+        >
+          {goal.quick ? <Pencil className="size-4" /> : <Sparkles className="size-4" />}
+        </button>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2">
         <button type="button" onClick={() => askAmount(false)} className="h-11 rounded-2xl border border-line text-[14px] font-medium text-muted transition-colors hover:text-fg active:scale-[0.98]">

@@ -4,7 +4,7 @@ import { Check, Lightbulb, RotateCcw, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { SectionProgress } from "@/components/SectionProgress";
-import { EmptyState, IconButton, Segmented, toast } from "@/components/ui";
+import { AddBar, EmptyState, IconButton, Segmented, toast } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import type { Idea, IdeaStatus } from "@/lib/types";
 import { useBackToClose } from "@/lib/useBackToClose";
@@ -41,25 +41,18 @@ export default function IdeasPage() {
     <div className="mx-auto max-w-2xl">
 
       {/* Capture first: one line, Enter, done. */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const title = text.trim();
-          if (!title) return;
-          addIdea(title);
+      <AddBar
+        value={text}
+        onChange={setText}
+        onSubmit={() => {
+          addIdea(text.trim());
           setText("");
           setFilter("open");
         }}
+        placeholder="Capture an idea"
+        label="Add idea"
         className="mb-8"
-      >
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Capture an idea…"
-          aria-label="New idea"
-          className="h-12 w-full border-b border-line bg-transparent text-[16px] outline-none placeholder:text-faint focus:border-line-strong"
-        />
-      </form>
+      />
 
       {ideas.length > 0 && (
         <SectionProgress

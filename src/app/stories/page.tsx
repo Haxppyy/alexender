@@ -11,6 +11,7 @@ import { STORIES } from "@/lib/stories";
 import type { MyStory } from "@/lib/types";
 import { overlaysOpen, useBackToClose } from "@/lib/useBackToClose";
 import { confirmDialog } from "@/components/dialog";
+import { toast } from "@/components/ui";
 
 /** One story as the page shows it — a built-in one or one you added. */
 interface Item {
@@ -55,17 +56,18 @@ export default function StoriesPage() {
   const today = useClock((s) => s.today);
   const myStories = useStore((s) => s.myStories);
   const storiesRead = useStore((s) => s.storiesRead);
+  const hidden = useStore((s) => s.hiddenStories);
   const [open, setOpen] = useState<number | null>(null);
   const [editing, setEditing] = useState<MyStory | "new" | null>(null);
 
   const items: Item[] = [
     ...[...myStories].sort((a, b) => b.createdAt - a.createdAt).map(toItem),
-    ...STORIES.map((s) => ({ ...s, key: s.id, caption: s.imageCaption, src: s.image })),
+    ...STORIES.filter((s) => !hidden.some((h) => h.id === s.id)).map((s) => ({ ...s, key: s.id, caption: s.imageCaption, src: s.image })),
   ];
   // One story is featured each day, cycling through them all.
   const dayNumber = Math.floor(new Date(today).getTime() / 86_400_000);
-  const featured = ((dayNumber % items.length) + items.length) % items.length;
-  const hero = items[featured];
+  const featured = items.length ? ((dayNumber % items.length) + items.length) % items.length : 0;
+  const hero: Item | undefined = items[featured];
   const read = new Set(storiesRead.map((r) => r.id));
   const readCount = items.filter((item) => read.has(item.key)).length;
 
@@ -80,6 +82,7 @@ export default function StoriesPage() {
         </button>
       </SectionTop>
 
+      {hero && (
       <button
         onClick={() => setOpen(featured)}
         className="group relative block w-full overflow-hidden rounded-3xl border border-line bg-surface text-left transition-transform duration-200 active:scale-[0.99]"
@@ -92,8 +95,9 @@ export default function StoriesPage() {
           {hero.when && <p className="mt-1 text-[12px] text-white/60">{hero.when}</p>}
         </div>
       </button>
+      )}
 
-      <SectionProgress value={(readCount / items.length) * 100} label="read" detail={`${readCount} of ${items.length} stories`} />
+      {items.length > 0 && <SectionProgress value={(readCount / items.length) * 100} label="read" detail={`${readCount} of ${items.length} stories`} />}
 
       <ul className="stagger mt-10">
         {items.map((item, i) => (
@@ -121,6 +125,19 @@ export default function StoriesPage() {
           onIndex={setOpen}
           onClose={() => setOpen(null)}
           onEdit={(story) => setEditing(story)}
+          onDelete={async (item) => {
+            const at = open;
+            if (item.mine) {
+              if (!(await confirmDialog(`Delete “${item.title}”?`, { detail: "Your story and its picture are removed.", danger: true }))) return;
+              useStore.getState().deleteMyStory(item.mine.id);
+              toast("Story deleted");
+            } else {
+              useStore.getState().hideStory(item.key);
+              toast("Story removed", { label: "Undo", run: () => useStore.getState().unhideStory(item.key) });
+            }
+            // Stay in the reader on the next story, if there is one.
+            setOpen(items.length > 1 ? Math.min(at ?? 0, items.length - 2) : null);
+          }}
         />
       )}
 
@@ -267,7 +284,7 @@ function StoryForm({ story, onDone }: { story?: MyStory; onDone: (deleted?: bool
 }
 
 /** Full-screen reader: the image, the story, what it teaches, and where it comes from. */
-function Reader({ items, index, onIndex, onClose, onEdit }: { items: Item[]; index: number; onIndex: (i: number) => void; onClose: () => void; onEdit: (story: MyStory) => void }) {
+function Reader({ items, index, onIndex, onClose, onEdit, onDelete }: { items: Item[]; index: number; onIndex: (i: number) => void; onClose: () => void; onEdit: (story: MyStory) => void; onDelete: (item: Item) => void }) {
   const item = items[index];
   const markStoryRead = useStore((s) => s.markStoryRead);
   useBackToClose(true, onClose, { lockScroll: true });
@@ -298,13 +315,14 @@ function Reader({ items, index, onIndex, onClose, onEdit }: { items: Item[]; ind
         <span className="flex-1 text-center text-[12px] text-faint tabular-nums">
           {index + 1} / {items.length}
         </span>
-        {item.mine ? (
+        {item.mine && (
           <IconButton label="Edit story" onClick={() => onEdit(item.mine!)} className="size-10">
             <Pencil className="size-4" />
           </IconButton>
-        ) : (
-          <span className="size-10" />
         )}
+        <IconButton label="Delete story" onClick={() => onDelete(item)} className="size-10 hover:text-danger">
+          <Trash2 className="size-4" />
+        </IconButton>
       </div>
 
       {/* Keyed so each story fades in fresh. */}

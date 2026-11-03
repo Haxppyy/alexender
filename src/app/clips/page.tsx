@@ -21,7 +21,6 @@ export default function ClipsPage() {
   const [playing, setPlaying] = useState<string | null>(null);
 
   const list = useMemo(() => [...clips].sort((a, b) => b.createdAt - a.createdAt), [clips]);
-  const size = clips.reduce((n, c) => n + c.size, 0);
 
   return (
     <div className="mx-auto max-w-xl">
@@ -45,9 +44,7 @@ export default function ClipsPage() {
       >
         <Upload className="size-5" /> Upload a clip
       </button>
-      <p className="mb-8 text-center text-[12.5px] text-faint">
-        {clips.length ? `${clips.length} ${clips.length === 1 ? "clip" : "clips"} · ${formatSize(size)} · ` : ""}Kept on this device only — not synced, not in backups.
-      </p>
+      <div className="mb-8" />
 
       {clips.length === 0 && <EmptyState icon={<Clapperboard className="size-5" />} title="Your clips" hint="Upload videos from your phone or computer — the speech that fires you up, a moment you're proud of, proof of how far you've come." />}
 

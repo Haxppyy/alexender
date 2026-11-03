@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { confirmDialog } from "@/components/dialog";
 import { SectionProgress } from "@/components/SectionProgress";
-import { EmptyState, IconButton, Segmented } from "@/components/ui";
+import { AddBar, EmptyState, IconButton, Segmented } from "@/components/ui";
 import { tap } from "@/lib/motion";
 import { useClock, useStore } from "@/lib/store";
 import type { Question } from "@/lib/types";
@@ -106,37 +106,15 @@ export default function QuestionsPage() {
   return (
     <div className="mx-auto max-w-2xl">
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          ask();
-        }}
-        className="mb-8 rounded-2xl border border-line bg-surface px-4 pt-3 pb-2 transition-colors focus-within:border-line-strong"
-        style={topic ? { borderColor: `color-mix(in oklab, ${hueOf(topic)} 35%, var(--line))` } : undefined}
-      >
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              ask();
-            }
-          }}
-          placeholder="What's your question, or your doubt?"
-          aria-label="New question"
-          rows={2}
-          className="block w-full resize-none bg-transparent text-[16px] leading-relaxed outline-none placeholder:text-faint [field-sizing:content]"
-        />
-        <div className="mt-1 flex items-center gap-2 border-t border-line pt-2">
-          <div className="min-w-0 flex-1">
-            <TopicPicker topics={topics} value={topic} onChange={setTopic} />
-          </div>
-          <button type="submit" disabled={!text.trim()} className="h-8 shrink-0 rounded-full bg-fg px-4 text-[13px] font-medium text-bg transition-[transform,opacity] active:scale-95 disabled:opacity-30">
-            Ask
-          </button>
-        </div>
-      </form>
+      <AddBar
+        value={text}
+        onChange={setText}
+        onSubmit={ask}
+        placeholder="What's your question?"
+        label="Ask"
+        className="mb-8"
+        footer={<TopicPicker topics={topics} value={topic} onChange={setTopic} />}
+      />
 
       {questions.length > 0 && (
         <>

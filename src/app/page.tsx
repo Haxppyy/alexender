@@ -1,13 +1,13 @@
 "use client";
 
-import { Gem, Plus } from "lucide-react";
+import { Gem } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AsciiStatue } from "@/components/AsciiStatue";
 import { DayReward } from "@/components/DayReward";
 import { Statue } from "@/components/brand";
 import { TaskList } from "@/components/TaskList";
-import { AnimatedNumber, Segmented, toast } from "@/components/ui";
+import { AddBar, AnimatedNumber, Segmented, toast } from "@/components/ui";
 import { addDays, fromKey } from "@/lib/date";
 import { tap } from "@/lib/motion";
 import { useClock, useStore } from "@/lib/store";
@@ -162,39 +162,20 @@ export default function TodayPage() {
 function AddTask({ date, placeholder }: { date: string; placeholder: string }) {
   const addTask = useStore((s) => s.addTask);
   const [text, setText] = useState("");
-
-  const add = () => {
-    const parsed = parseQuickTask(text, date);
-    if (!parsed.title) return;
-    addTask({ title: parsed.title, date: parsed.date });
-    tap(8);
-    setText("");
-  };
-
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        add();
+    <AddBar
+      value={text}
+      onChange={setText}
+      onSubmit={() => {
+        const parsed = parseQuickTask(text, date);
+        if (!parsed.title) return;
+        addTask({ title: parsed.title, date: parsed.date });
+        tap(8);
+        setText("");
       }}
-      className="mb-6 flex items-center gap-2 rounded-2xl border border-line bg-surface p-1.5 pl-4 transition-colors focus-within:border-line-strong"
-    >
-      <input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder={placeholder}
-        aria-label="New task"
-        enterKeyHint="done"
-        className="h-11 min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:text-faint"
-      />
-      <button
-        type="submit"
-        aria-label="Add task"
-        disabled={!text.trim()}
-        className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-fg text-bg transition-[transform,opacity] active:scale-90 disabled:opacity-25"
-      >
-        <Plus className="size-5" strokeWidth={2.4} />
-      </button>
-    </form>
+      placeholder={placeholder}
+      label="Add task"
+      className="mb-6"
+    />
   );
 }

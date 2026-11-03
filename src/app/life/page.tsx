@@ -109,12 +109,7 @@ export default function LifePage() {
         {/* Two years to a row, so a decade is five rows. */}
         {view === "months" && <Grid total={Math.round(expectancy * 12)} lived={life.monthsLived} cols={24} labelEvery={120} labelStep={10} />}
         {view === "year" && <YearDays now={now} today={today} marks={marks} selected={selected} onSelect={setSelected} />}
-        <p className="mt-4 text-center text-[11.5px] text-faint">
-          {view === "year"
-            ? "Each square is a day of this year — tap one to mark it."
-            : `Each ${view === "days" ? "dot" : "square"} is one ${view.slice(0, -1)} of your life. The dim ones are gone.`}
-          {(view === "year" || view === "days") && " Green: used. Dark: wasted."}
-        </p>
+        {(view === "year" || view === "days") && <p className="mt-4 text-center text-[12px] text-faint">Green: used · Dark: wasted</p>}
         {view === "year" && selected !== today && <MarkDay date={selected} marks={marks} title={fromKey(selected).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })} />}
         {(view === "year" || view === "days") && <MarkCounts marks={marks} today={today} />}
       </section>

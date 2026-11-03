@@ -391,6 +391,8 @@ export interface SavingsGoal {
   id: string;
   title: string;
   target: number;
+  /** Your own one-tap amounts; without them the buttons learn from what you save. */
+  quick?: number[];
   deadline?: string;
   createdAt: number;
   updatedAt?: number;

@@ -208,7 +208,6 @@ function ReminderSettings({ goal, today }: { goal: Goal; today: string }) {
         <Button size="sm" variant="outline" onClick={() => showReminder(goal.id)}>
           Show me now
         </Button>
-        <span className="text-[12px] text-faint">A notification comes while Alexander is open, even in the background. If it was closed, he tells you when you next open it.</span>
       </div>
     </section>
   );

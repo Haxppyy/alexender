@@ -7,7 +7,7 @@ import { BarChart } from "@/components/charts";
 import { confirmDialog } from "@/components/dialog";
 import { SectionProgress } from "@/components/SectionProgress";
 import { SortableList } from "@/components/Sortable";
-import { EmptyState, IconButton, ProgressBar, Select, toast } from "@/components/ui";
+import { AddBar, EmptyState, IconButton, ProgressBar, Select, toast } from "@/components/ui";
 import { addDays, fromKey, toKey } from "@/lib/date";
 import { tap } from "@/lib/motion";
 import { byOrder, useClock, useStore } from "@/lib/store";
@@ -75,27 +75,18 @@ export default function WorkoutPage() {
   return (
     <div className="mx-auto max-w-xl">
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!parsed) return;
+      <AddBar
+        value={text}
+        onChange={setText}
+        onSubmit={() => {
+          if (!parsed) return toast("Put the daily target after the name — like “Push-ups 100”");
           addExercise(parsed);
           setText("");
         }}
+        placeholder="Push-ups 100 · Run 5 km"
+        label="Add exercise"
         className="mb-8"
-      >
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Push-ups 100 · Run 5 km · Plank 10 min"
-          aria-label="New exercise with a daily target"
-          enterKeyHint="done"
-          className="h-12 w-full border-b border-line bg-transparent text-[16px] outline-none placeholder:text-faint focus:border-line-strong"
-        />
-        <p className="mt-2 h-4 text-[12px] text-faint">
-          {text.trim() ? (parsed ? `${parsed.title} — ${fmt(parsed.target)} ${unitWord(parsed.unit, parsed.target)} a day. Press Enter.` : "Add the daily target after the name, like “Push-ups 100”.") : ""}
-        </p>
-      </form>
+      />
 
       {list.length > 0 && <SectionProgress value={avg * 100} label="of today's targets" detail={`${hit} of ${list.length} hit`} />}
 
