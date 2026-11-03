@@ -3,7 +3,6 @@
 import { Gem } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AsciiStatue } from "@/components/AsciiStatue";
 import { DayReward } from "@/components/DayReward";
 import { Statue } from "@/components/brand";
 import { TaskList } from "@/components/TaskList";
@@ -50,8 +49,6 @@ export default function TodayPage() {
   const tasks = useStore((s) => s.tasks);
   const [day, setDay] = useState<Day>("today");
   const burst = useDayWon(today, threshold);
-  const ascii = useStore((s) => s.settings.statueStyle === "ascii");
-  const updateSettings = useStore((s) => s.updateSettings);
   const gems = useStore((s) => s.achievements.filter((a) => !a.unclaimed && !a.id.startsWith("milestone:")).length);
 
   const date = day === "today" ? today : addDays(today, 1);
@@ -82,24 +79,7 @@ export default function TodayPage() {
         <header className="mx-auto mb-8 flex max-w-sm items-center gap-5 sm:gap-7">
           {/* Alexander, every day — small, beside the numbers, never over them. */}
           <div className="relative shrink-0">
-            {/* Tap the statue to switch between the photo and the statue drawn in characters. */}
-            <button
-              type="button"
-              aria-label={ascii ? "Show the statue as a photo" : "Show the statue in characters"}
-              onClick={() => {
-                tap(8);
-                updateSettings({ statueStyle: ascii ? "photo" : "ascii" });
-              }}
-              className={cn("block transition-transform active:scale-[0.97]", pct >= 100 && "statue-glow")}
-            >
-              {ascii ? (
-                <span className="flex min-h-[140px] items-center sm:min-h-[160px]">
-                  <AsciiStatue size={4.8} />
-                </span>
-              ) : (
-                <Statue priority className="h-[140px] w-auto sm:h-[160px]" />
-              )}
-            </button>
+            <Statue priority className={cn("h-[140px] w-auto sm:h-[160px]", pct >= 100 && "statue-glow")} />
             {burst > 0 && (
               <div key={burst} aria-hidden className="burst pointer-events-none absolute inset-0">
                 {SPARKS.map((a) => (

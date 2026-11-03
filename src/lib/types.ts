@@ -432,8 +432,6 @@ export interface Settings {
   lifeExpectancy?: number;
   /** Which tab the YouTube section opens on. */
   youtubeTab?: "videos" | "playlists" | "podcasts";
-  /** How the statue on Today is drawn: the photo, or in characters. */
-  statueStyle?: "photo" | "ascii";
   /** Which picture of time the Life section shows. */
   lifeView?: string;
   /** Device passcode, stored only as a salted hash. */

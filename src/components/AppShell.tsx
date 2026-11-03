@@ -12,7 +12,7 @@ import { startSync, useSync } from "@/lib/sync";
 import { useBackToClose } from "@/lib/useBackToClose";
 import { cn } from "@/lib/utils";
 import { LockScreen } from "./Lock";
-import { AsciiStatue } from "./AsciiStatue";
+import { Statue } from "./brand";
 import { Logo } from "./Logo";
 import { Onboarding } from "./Onboarding";
 import { Toaster } from "./ui";
@@ -166,7 +166,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (!hydrated || !today || (!name && !syncReady)) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
-        <AsciiStatue size={5} />
+        <Statue priority className="loading-statue h-40 w-auto" />
       </div>
     );
   }
